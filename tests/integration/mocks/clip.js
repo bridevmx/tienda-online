@@ -106,8 +106,7 @@ export async function startClipMock() {
 				body.redirection_url?.default &&
 				typeof reference === 'string' &&
 				reference.length > 0 &&
-				reference.length <= 36 &&
-				body.webhook_url;
+				reference.length <= 36; // webhook_url es opcional en la API real
 			if (!valid) return send(res, 400, { error: 'invalid body', code_message: 'invalid body' });
 			const id = randomUUID();
 			const checkout = {

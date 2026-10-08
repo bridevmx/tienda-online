@@ -40,7 +40,9 @@ firma. Solo sirve para saber qué link consultar con `GET /v2/checkout/{id}`; un
 - [x] Errores de Clip tipados (401 token, 403 región, 412 límite) leyendo `message` o `code_message`.
 - [x] Autenticación configurable: `CLIP_API_TOKEN` (valor tal cual del header `Authorization`) o
       `CLIP_API_KEY`/`CLIP_API_SECRET` (Basic).
-- [ ] **Probar en el sandbox/cuenta real de Clip** (lo único que no se puede verificar sin cuenta):
+- [x] Guía y herramientas para validar con pagos reales de $1 en local: [`CLIP-LOCAL.md`](CLIP-LOCAL.md),
+      `npm run clip:check`, `npm run seed:clip-test`.
+- [ ] **Ejecutar esa guía contra la cuenta real de Clip** (lo único que no se puede verificar sin cuenta):
   - [ ] Formato exacto del header `Authorization` aceptado.
   - [ ] Que el webhook realmente llega con `{ id, origin, event_type }` y a qué ritmo.
   - [ ] Si hay reintentos y qué respuesta espera Clip.

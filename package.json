@@ -28,7 +28,9 @@
 		"test:integration": "vitest run --config vitest.integration.config.js",
 		"jobs:expire-orders": "node --env-file-if-exists=.env scripts/jobs/expire-orders.js",
 		"test:e2e": "vitest run --config vitest.e2e.config.js",
-		"jobs:reconcile-payments": "node --env-file-if-exists=.env scripts/jobs/reconcile-payments.js"
+		"jobs:reconcile-payments": "node --env-file-if-exists=.env scripts/jobs/reconcile-payments.js",
+		"seed:clip-test": "node --env-file-if-exists=.env scripts/seed-clip-test.js",
+		"clip:check": "node --env-file-if-exists=.env scripts/clip-check.js"
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",

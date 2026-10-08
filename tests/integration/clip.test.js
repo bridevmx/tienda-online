@@ -4,6 +4,7 @@ import {
 	cfg,
 	client,
 	clipEvent,
+	count,
 	clipMock,
 	enabled,
 	first,
@@ -201,6 +202,74 @@ describe.skipIf(!enabled)('Clip: verificacion de pagos', () => {
 			.update(unpaid.order.id, { expires_at: '2020-01-01 00:00:00.000Z' });
 		runScript('scripts/jobs/expire-orders.js', [], clipEnv());
 		ok('el impago si se cancela', (await orderOf(unpaid.order)).status === 'cancelled');
+	});
+
+	it('producto de prueba de $1: seed idempotente y cobro exacto de $1.00 con tarjeta', async () => {
+		const run = () => runScript('scripts/seed-clip-test.js');
+		ok('el seed corre', run().status === 0);
+		const again = run();
+		ok('es idempotente', again.status === 0 && /Producto listo/.test(again.stdout), again.stderr);
+		ok('hay un solo producto', (await count('products', 'slug="producto-prueba-1"')) === 1);
+		ok(
+			'la pagina del producto existe',
+			(await client().get('/productos/producto-prueba-1')).status === 200
+		);
+
+		// con IVA y comision apagados el total es exactamente $1.00
+		await saveSettings(boss, { 'tax.apply_iva': 'off', 'clip.apply_fee': 'off' });
+		await clipMock.reset();
+		const { id, payment, order } = await cardOrder('PRUEBA-1');
+		const create = (await clipMock.requests()).find((q) => q.method === 'POST');
+		ok(
+			'Clip recibe amount 1 (MXN)',
+			create.body.amount === 1 &&
+				create.body.currency === 'MXN' &&
+				payment.amount === 100 &&
+				order.total === 100,
+			`${create.body.amount} ${payment.amount}`
+		);
+		await clipMock.complete(id);
+		await sendClipWebhook(clipEvent(id));
+		ok(
+			'se confirma el pago de $1',
+			!!(await waitFor(async () => (await orderOf(order)).status === 'paid'))
+		);
+		await saveSettings(boss, { 'clip.apply_fee': 'on' });
+	});
+
+	it('clip:check crea un link y reporta; sin credenciales avisa', async () => {
+		const r = runScript('scripts/clip-check.js', [], clipEnv());
+		ok(
+			'crea el link y lo imprime',
+			r.status === 0 &&
+				/Clip acepto las credenciales/.test(r.stdout) &&
+				/pagar en:\s+http/.test(r.stdout),
+			r.stdout + r.stderr
+		);
+		const id = r.stdout.match(/id:\s+([0-9a-f-]{36})/)?.[1];
+		const q = runScript('scripts/clip-check.js', ['--id', id], clipEnv());
+		ok(
+			'consulta un link existente',
+			q.status === 0 && /CHECKOUT_CREATED/.test(q.stdout),
+			q.stdout + q.stderr
+		);
+		ok(
+			'monto invalido',
+			runScript('scripts/clip-check.js', ['--amount', '0.5'], clipEnv()).status === 1
+		);
+		const none = runScript('scripts/clip-check.js', [], {
+			CLIP_API_KEY: '',
+			CLIP_API_SECRET: '',
+			CLIP_API_TOKEN: '',
+			CLIP_WEBHOOK_TOKEN: ''
+		});
+		ok('sin configurar sale con 2', none.status === 2);
+		const bad = runScript('scripts/clip-check.js', [], { ...clipEnv(), CLIP_API_SECRET: 'mala' });
+		ok(
+			'credenciales incorrectas: 401 explicado',
+			bad.status === 1 && /401/.test(bad.stderr),
+			bad.stderr
+		);
 	});
 
 	it('los scripts avisan si Clip no esta configurado', async () => {
