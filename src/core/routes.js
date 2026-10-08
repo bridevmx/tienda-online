@@ -44,6 +44,10 @@ export const routes = {
 		sales: () => '/tpv/ventas'
 	},
 
+	/** Archivo de un registro de PocketBase servido por la app (el navegador nunca ve PocketBase). */
+	media: (collection, id, filename, thumb) =>
+		`/media/${enc(collection)}/${enc(id)}/${enc(filename)}${thumb ? `?thumb=${enc(thumb)}` : ''}`,
+
 	// unicos endpoints /api: webhooks
 	webhooks: {
 		clip: () => '/api/webhooks/clip'

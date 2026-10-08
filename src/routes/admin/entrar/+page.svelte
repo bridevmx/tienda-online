@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import LoginForm from '#ui/LoginForm.svelte';
+	import PublicShell from '#ui/PublicShell.svelte';
 
 	let { form } = $props();
 </script>
@@ -9,4 +10,6 @@
 	<title>Entrar | Administración</title>
 </svelte:head>
 
-<LoginForm title="Administración" {form} {enhance} />
+<PublicShell>
+	<LoginForm title="Administración" {form} {enhance} />
+</PublicShell>

@@ -1,4 +1,5 @@
 import { DomainError } from '#core/errors.js';
+import { saveRecord } from '#core/crud-payload.js';
 import { guard } from '#core/pb-errors.js';
 import {
 	categorySchema,
@@ -25,7 +26,8 @@ const notFoundToNull = (err) => {
 /**
  * Servicio del catalogo. Recibe un cliente de PocketBase (con la sesion del que llama, asi las
  * reglas de la base tambien aplican). Las rutas no usan `pb.collection(...)` directo: pasan por aqui.
- * Precios en centavos enteros.
+ * Precios en centavos enteros. Los metodos de escritura aceptan `extras` = { uploads, removals } con
+ * archivos de formulario (ver saveRecord).
  */
 export function createCatalogService(pb) {
 	// ---------- categorias ----------
@@ -43,15 +45,15 @@ export function createCatalogService(pb) {
 	}
 
 	const categories = {
-		async create(input) {
+		async create(input, extras) {
 			const data = parse(categorySchema, input);
 			await assertParent(null, data);
-			return guard(() => pb.collection('categories').create(data));
+			return guard(() => saveRecord(pb, 'categories', null, data, extras));
 		},
-		async update(id, input) {
+		async update(id, input, extras) {
 			const data = parse(categorySchema, input);
 			await assertParent(id, data);
-			return guard(() => pb.collection('categories').update(id, data));
+			return guard(() => saveRecord(pb, 'categories', id, data, extras));
 		},
 		/** Categorias activas como arbol de un nivel: [{ ...raiz, children: [...] }]. */
 		async listTree() {
@@ -83,13 +85,13 @@ export function createCatalogService(pb) {
 
 	// ---------- productos ----------
 	const products = {
-		async create(input) {
+		async create(input, extras) {
 			const data = parse(productSchema, input);
-			return guard(() => pb.collection('products').create(data));
+			return guard(() => saveRecord(pb, 'products', null, data, extras));
 		},
-		async update(id, input) {
+		async update(id, input, extras) {
 			const data = parse(productSchema, input);
-			return guard(() => pb.collection('products').update(id, data));
+			return guard(() => saveRecord(pb, 'products', id, data, extras));
 		},
 		/** Producto por slug con su categoria y sus variantes (cada una con sus opciones legibles). */
 		async getBySlug(slug) {
@@ -151,15 +153,15 @@ export function createCatalogService(pb) {
 	}
 
 	const variants = {
-		async create(input) {
+		async create(input, extras) {
 			const data = parse(variantSchema, input);
 			await assertVariantOptions(data.product, data.values, null);
-			return guard(() => pb.collection('variants').create(data));
+			return guard(() => saveRecord(pb, 'variants', null, data, extras));
 		},
-		async update(id, input) {
+		async update(id, input, extras) {
 			const data = parse(variantSchema, input);
 			await assertVariantOptions(data.product, data.values, id);
-			return guard(() => pb.collection('variants').update(id, data));
+			return guard(() => saveRecord(pb, 'variants', id, data, extras));
 		}
 	};
 

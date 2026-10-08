@@ -1,4 +1,5 @@
 import { defineModule } from '#core/module.js';
+import { resources } from './resources.js';
 
 /** Roles que trae el sistema. `admin` es `system`: recibe todos los permisos y no se edita en la app. */
 export const SYSTEM_ROLES = [
@@ -25,6 +26,6 @@ export default defineModule({
 		perm('customers:create', 'Crear clientes', ['gerente', 'cajero']),
 		perm('customers:update', 'Editar clientes', ['gerente']),
 		perm('customers:delete', 'Eliminar clientes')
-	]
-	// nav y resources llegan con el CRUD generico (fase 3)
+	],
+	resources
 });

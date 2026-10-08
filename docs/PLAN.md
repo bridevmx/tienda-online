@@ -164,8 +164,11 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       por permiso, modulo `catalog` (esquemas Zod, reglas de integridad, servicio) y
       `npm run seed:catalog`. Probado contra PocketBase 0.40.4 (48 comprobaciones de reglas, campos,
       borrados protegidos y servicio; la migracion sube y baja).
-- [ ] **3. Admin generico** — `/admin/[resource]`, `createCrudService`, DataTable y Form desde Zod;
-      categorias y roles primero, luego productos y variantes.
+- [x] **3. Admin generico** — `/admin/[resource]`, `createCrudService`, tabla y formulario generados
+      desde la definicion del recurso + Zod; categorias, roles, opciones (con sus valores), productos
+      (con sus variantes) y variantes, con imagenes. Probado contra PocketBase 0.40.4 (80 comprobaciones
+      del admin por HTTP, mas las de fases 1 y 2); 123 tests unitarios. Pendiente: generador de
+      combinaciones de variantes y administrar `users`/`customers` desde el admin.
 - [ ] **4. Ajustes** — `settings` con registro Zod, `/admin/ajustes`.
 - [ ] **5. Precios y tienda** — `computeTotals`, `PriceBreakdown`, listado, detalle con selector de
       variantes (`findVariant`), carrito, simulador para personal.
@@ -217,7 +220,46 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
   (campo `editor`): hay que sanitizarla al mostrarla en la tienda (fase 5).
 - **Imagenes:** campos de archivo (jpeg/png/webp, 5 MB) con miniaturas `160x160`, `480x480` y `960x0`.
 
-## 14. Pendiente de validar
+## 14. Notas de implementacion (fase 3): el CRUD generico
+
+**Agregar un recurso al admin** (sin tocar rutas ni componentes): en el modulo, `defineResource({...})` y
+ponerlo en `resources` del manifiesto. Lo que declara:
+
+- `name` (segmento de URL y coleccion), `label: [singular, plural]`, `feminine` (Nueva/Nuevo).
+- `permissions: { read, create, update, delete }`: `collectResources` falla si algun codigo no esta
+  declarado en algun modulo (un typo no deja el recurso sin proteccion en silencio).
+- `schema` (Zod: valida en el servidor), `columns` (tipos: text, code, muted, bool, money, integer, stock,
+  relation, relations, count, date, image), `fields` (text, textarea, html, integer, money, checkbox,
+  relation, relations, groups, image, images), `search`, `defaultSort`, `expand`, `filters`, `children`
+  (tablas de hijos en la pagina de edicion, con "Agregar" que prellena la clave foranea y vuelve al
+  padre), `canEdit`/`canDelete` (p. ej. roles `system`) y `service(pb)` para reglas propias.
+- Los campos `options` traen su lista desde otra coleccion (`label`, `group`, `hint`).
+
+**Rutas:** `/admin/<recurso>` (lista), `/nuevo`, `/<id>` (editar; acciones `?/save` y `?/delete`).
+Las rutas especificas (`/admin/ventas`, `/admin/ajustes`) ganan por especificidad. En lugar de un matcher
+de parametros, un recurso inexistente responde 404 desde el `load` (asi el cliente no carga los
+recursos). SvelteKit no permite una accion `default` junto a acciones con nombre: la edicion usa `save`.
+
+**Seguridad:** cada pagina y accion pide el permiso del recurso; los parametros de la URL (`q`, `sort`,
+`page`, filtros) se validan contra lo que el recurso permite y la busqueda usa parametros enlazados;
+los campos `immutable` (p. ej. el producto de una variante) se ignoran al editar; los nombres de
+archivo a quitar se validan; el texto se escapa (Svelte) y la descripcion HTML solo se guarda.
+Nadie puede editar el rol que tiene asignado (migracion `1791500300`), para evitar escalada.
+
+**Datos de formulario:** un checkbox sin marcar llega como ausente: `toInput` lo vuelve `'off'` (no
+"el valor por defecto", que lo dejaria siempre activo). El dinero se escribe en pesos y se guarda en
+centavos (`toInput`/`toFormValues`). Los select de "opciones" de una variante envian un valor por
+opcion; el servicio valida que no se repita ni falte ninguna (regla del catalogo).
+
+**Imagenes:** se guardan en PocketBase y se sirven por `GET /media/<coleccion>/<id>/<archivo>?thumb=`
+(solo categorias, productos y variantes; solo imagenes; solo las miniaturas configuradas). La subida
+va en una segunda llamada tras guardar los datos; si falla en un registro nuevo, se borra para no dejarlo
+a medias. En campos de varios archivos se agregan (`campo+`) y se quitan con casillas.
+
+**Mensajes:** una cookie de un solo uso (`flash`) muestra el aviso tras guardar o eliminar. Los colores
+de aviso usan `info` y `error` (el tema no tiene "success").
+
+## 15. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
 - Mecanismo de verificacion de webhooks de Clip (documentacion vigente).

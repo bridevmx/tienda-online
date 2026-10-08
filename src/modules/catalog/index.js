@@ -1,4 +1,5 @@
 import { defineModule } from '#core/module.js';
+import { resources } from './resources.js';
 
 const RESOURCES = [
 	{ name: 'categories', label: 'categorías' },
@@ -22,6 +23,6 @@ const permissionsFor = ({ name, label }) => [
 export default defineModule({
 	name: 'catalog',
 	label: 'Catálogo',
-	permissions: RESOURCES.flatMap(permissionsFor)
-	// nav y resources llegan con el CRUD generico (fase 3)
+	permissions: RESOURCES.flatMap(permissionsFor),
+	resources
 });

@@ -8,6 +8,12 @@ describe('routes', () => {
 		expect(routes.admin.create('categories')).toBe('/admin/categories/nuevo');
 		expect(routes.webhooks.clip()).toBe('/api/webhooks/clip');
 	});
+	it('construye URLs de archivos', () => {
+		expect(routes.media('products', 'abc', 'foto.png')).toBe('/media/products/abc/foto.png');
+		expect(routes.media('products', 'abc', 'foto.png', '480x480')).toBe(
+			'/media/products/abc/foto.png?thumb=480x480'
+		);
+	});
 	it('escapa segmentos dinamicos', () => {
 		expect(routes.product('a/b?c')).toBe('/productos/a%2Fb%3Fc');
 	});

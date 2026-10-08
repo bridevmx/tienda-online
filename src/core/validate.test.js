@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { parseForm } from './validate.js';
+import { extractFiles, formDataToObject, parseForm } from './validate.js';
 
 const schema = z.object({
 	email: z.email('correo invalido'),
@@ -19,5 +19,28 @@ describe('parseForm', () => {
 		expect(res.ok).toBe(false);
 		expect(res.errors).toEqual({ email: 'correo invalido', password: 'falta' });
 		expect(res.values).toEqual({ email: 'nope' });
+	});
+});
+
+describe('formDataToObject', () => {
+	it('agrupa campos repetidos y omite archivos', () => {
+		const fd = new FormData();
+		fd.append('a', '1');
+		fd.append('tags', 'x');
+		fd.append('tags', 'y');
+		fd.append('tags', 'z');
+		fd.append('file', new File(['hola'], 'a.txt'));
+		expect(formDataToObject(fd)).toEqual({ a: '1', tags: ['x', 'y', 'z'] });
+	});
+});
+
+describe('extractFiles', () => {
+	it('devuelve solo archivos con contenido', () => {
+		const fd = new FormData();
+		fd.append('images', new File(['abc'], 'a.png'));
+		fd.append('images', new File([], ''));
+		fd.append('image', new File([], ''));
+		expect(Object.keys(extractFiles(fd, ['images', 'image']))).toEqual(['images']);
+		expect(extractFiles(fd, ['images']).images).toHaveLength(1);
 	});
 });

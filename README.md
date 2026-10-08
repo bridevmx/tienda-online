@@ -32,12 +32,22 @@ Luego entra en `http://localhost:5173/admin/entrar`. Las migraciones de `pocketb
 aplican solas cuando arranca PocketBase. Tras agregar permisos en un modulo, vuelve a correr
 `npm run permissions:sync` (no pisa lo que edites en la app).
 
+### Administración (`/admin`)
+
+El menú del admin se arma solo con los módulos y lo que el rol puede ver. Cada **recurso** (categorías,
+productos, opciones, variantes, roles) tiene listado con búsqueda, filtros, orden y paginación,
+formulario de alta/edición y borrado con confirmación. Las imágenes se suben desde el formulario y se
+sirven por `/media/...` (el navegador nunca habla con PocketBase).
+
+Para administrar una colección nueva basta declarar su recurso en el módulo (ver `docs/PLAN.md`,
+sección 14); no hay rutas ni componentes por recurso.
+
 ### Produccion (adapter-node)
 
 Con `adapter-node` el origen de la solicitud se deduce de las cabeceras. Detras de un proxy con TLS
 define `PROTOCOL_HEADER=x-forwarded-proto` y `HOST_HEADER=x-forwarded-host` (y haz que el proxy las
 envie); si no, SvelteKit asume `https` y bloquea los formularios (`403 Cross-site POST`) o las cookies
-no coinciden. PocketBase debe quedar en red interna, sin exponerse a internet.
+no coinciden. Sube `BODY_SIZE_LIMIT` (p. ej. `10M`) para poder subir imágenes de hasta 5 MB. PocketBase debe quedar en red interna, sin exponerse a internet.
 
 ## Scripts
 

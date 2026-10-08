@@ -37,5 +37,6 @@ describe('optionalText / ids', () => {
 		expect(recordIdList().parse(undefined)).toEqual([]);
 		expect(recordIdList().parse(id)).toEqual([id]);
 		expect(recordIdList().parse([id, id])).toEqual([id, id]);
+		expect(recordIdList().parse(['', id, ''])).toEqual([id]); // selects en blanco
 	});
 });

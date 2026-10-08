@@ -23,8 +23,10 @@ const manifestSchema = z.object({
 			})
 		)
 		.default([]),
-	/** Recursos que el admin genera automaticamente (ver CRUD generico, fase 3). */
-	resources: z.array(z.object({ name: z.string().min(1) }).passthrough()).default([]),
+	/** Recursos que el admin genera automaticamente (ver `defineResource` en core/resource.js). */
+	resources: z
+		.array(z.custom((v) => v && typeof v.name === 'string' && v.permissions && v.schema))
+		.default([]),
 	/** Entradas de menu del admin. */
 	nav: z
 		.array(
