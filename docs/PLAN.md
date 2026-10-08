@@ -156,8 +156,10 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       (`/admin/entrar`) y de clientes (`/entrar`); registro, verificacion y recuperacion de clientes
       quedan en la fase 7. Probado contra PocketBase 0.40.4 real (52 comprobaciones de flujo web y
       reglas de API); falta convertirlo en pruebas automaticas con una instancia temporal (fase 9).
-- [ ] **2. Catalogo** — migraciones (categories, products, options, option_values, variants), reglas
-      por rol, seed.
+- [x] **2. Catalogo** — migracion (categories, products, options, option_values, variants), reglas
+      por permiso, modulo `catalog` (esquemas Zod, reglas de integridad, servicio) y
+      `npm run seed:catalog`. Probado contra PocketBase 0.40.4 (48 comprobaciones de reglas, campos,
+      borrados protegidos y servicio; la migracion sube y baja).
 - [ ] **3. Admin generico** — `/admin/[resource]`, `createCrudService`, DataTable y Form desde Zod;
       categorias y roles primero, luego productos y variantes.
 - [ ] **4. Ajustes** — `settings` con registro Zod, `/admin/ajustes`.
@@ -190,7 +192,28 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
 - **Descarga de PocketBase:** `npm run pb:download` resuelve la ultima version por GitHub o, si no se
   puede, por el proxy de modulos de Go. Probado con 0.40.4 y el SDK `pocketbase` 0.28.1.
 
-## 13. Pendiente de validar
+## 13. Notas de implementacion (fase 2)
+
+- **Lectura publica solo de lo activo** (categoria, producto; una variante ademas exige producto
+  activo). El personal con `<recurso>:read` ve tambien lo inactivo. Opciones y valores son publicos.
+  PocketBase expone todos los campos de un registro visible (p. ej. `stock`), asi que la tienda no le
+  pasa registros crudos al navegador: el servicio los mapea (`getBySlug` ya devuelve solo lo necesario).
+- **Precio y stock no son `required`:** en PocketBase un numero requerido rechaza el 0. Siguen siendo
+  enteros `>= 0`, y Zod (`variantSchema`) los exige.
+- **Borrados protegidos con reglas, no con hooks:** una categoria con subcategorias y un valor de opcion
+  usado por una variante no se borran (`categories_via_parent.id = ""`, `variants_via_values.id = ""`);
+  productos en una categoria y valores en una opcion los protege la relacion requerida. Borrar un
+  producto borra sus variantes. Las reglas que referencian a otra coleccion se asignan despues de crearla.
+- **Integridad en SvelteKit** (`modules/catalog/rules.js`, funciones puras con tests): una variante no
+  repite opcion; todas las variantes de un producto usan las mismas opciones (un producto simple
+  tiene una sola variante sin valores); categorias de un solo nivel.
+- **Errores de dominio:** `DomainError` (con `field`) y `guard()` traducen los errores de validacion de
+  PocketBase (p. ej. slug o SKU duplicado) para que los formularios del admin los pinten en su campo.
+- **Slugs** se generan desde el nombre si se dejan vacios (`core/slug.js`). La descripcion es HTML
+  (campo `editor`): hay que sanitizarla al mostrarla en la tienda (fase 5).
+- **Imagenes:** campos de archivo (jpeg/png/webp, 5 MB) con miniaturas `160x160`, `480x480` y `960x0`.
+
+## 14. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
 - Mecanismo de verificacion de webhooks de Clip (documentacion vigente).

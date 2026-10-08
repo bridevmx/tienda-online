@@ -22,7 +22,8 @@
 		"pb:serve": "node scripts/pb-serve.js",
 		"pb:superuser": "node scripts/pb-superuser.js",
 		"permissions:sync": "node --env-file-if-exists=.env scripts/permissions-sync.js",
-		"create-staff": "node --env-file-if-exists=.env scripts/create-staff.js"
+		"create-staff": "node --env-file-if-exists=.env scripts/create-staff.js",
+		"seed:catalog": "node --env-file-if-exists=.env scripts/seed-catalog.js"
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",

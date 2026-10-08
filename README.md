@@ -25,6 +25,7 @@ npm run pb:superuser -- admin@tienda.local "una-contrasena-larga"   # superusuar
 # pon ese correo y contrasena en .env (PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD)
 npm run permissions:sync                                            # permisos y roles base
 npm run create-staff -- --email tu@correo.com --name "Tu Nombre" --role admin
+npm run seed:catalog                                                # (opcional) categorías y productos de ejemplo
 ```
 
 Luego entra en `http://localhost:5173/admin/entrar`. Las migraciones de `pocketbase/pb_migrations/` se
@@ -47,6 +48,7 @@ no coinciden. PocketBase debe quedar en red interna, sin exponerse a internet.
 | `npm run lint`             | ESLint + Prettier (`npm run format` arregla el formato)                           |
 | `npm run check:colors`     | falla si el markup usa `base-*`, `success`, `warning` o `accent`                  |
 | `npm run permissions:sync` | sincroniza permisos y roles base desde los modulos (`-- --prune` borra obsoletos) |
+| `npm run seed:catalog`     | datos de ejemplo del catálogo (idempotente)                                       |
 | `npm run build`            | build de produccion (`node build` para servirlo)                                  |
 
 ## Convenciones
@@ -55,3 +57,5 @@ no coinciden. PocketBase debe quedar en red interna, sin exponerse a internet.
 - Imports: `#core/*`, `#modules/*`, `#ui/*`. Rutas solo via `#core/routes.js`.
 - Colores: solo `primary`, `secondary`, `info` y `error` de DaisyUI (ver `docs/PLAN.md` seccion 8).
 - Sin `pb_hooks`: la logica va en SvelteKit; `pocketbase/pb_migrations/` solo guarda esquema.
+- Si cambias el esquema desde el dashboard de PocketBase, genera una migracion automatica en
+  `pb_migrations/`: revisala y commitea (o descartala) para que el esquema siga siendo reproducible.
