@@ -25,7 +25,8 @@
 		"create-staff": "node --env-file-if-exists=.env scripts/create-staff.js",
 		"seed:catalog": "node --env-file-if-exists=.env scripts/seed-catalog.js",
 		"check:schema": "node --env-file-if-exists=.env scripts/check-schema.js",
-		"test:integration": "vitest run --config vitest.integration.config.js"
+		"test:integration": "vitest run --config vitest.integration.config.js",
+		"jobs:expire-orders": "node --env-file-if-exists=.env scripts/jobs/expire-orders.js"
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",

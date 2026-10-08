@@ -1,7 +1,17 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { computeTotals } from '#core/pricing.js';
 import { formatMoney } from '#core/money.js';
-import { client, enabled, first, ok, raw, saveSettings, staff, su as suPb } from './support.js';
+import {
+	client,
+	enabled,
+	first,
+	ok,
+	raw,
+	saveSettings,
+	staff,
+	stockOf,
+	su as suPb
+} from './support.js';
 
 const PRICING = {
 	applyIva: true,
@@ -317,10 +327,12 @@ describe.skipIf(!enabled)('tienda publica: catalogo, precios y carrito', () => {
 		ok('agregar la misma variante suma', (await anon.get('/carrito')).text.includes('(3)'));
 		await anon.post('/carrito?/set', { variant: taza.id, qty: '5' });
 		ok('cambiar cantidad', (await anon.get('/carrito')).text.includes('(5)'));
+		const available = await stockOf('TAZ-CER'); // otras pruebas consumen existencias
 		r = await anon.post('/carrito?/set', { variant: taza.id, qty: '9999' });
 		ok(
 			'la cantidad se limita a las existencias con aviso',
-			/Solo hay 25/.test(r.flash || '') && (await anon.get('/carrito')).text.includes('(25)'),
+			r.flash?.includes(`Solo hay ${available}`) &&
+				(await anon.get('/carrito')).text.includes(`(${available})`),
 			r.flash
 		);
 		await anon.post('/carrito?/add', { variant: gorraNeg.id, qty: '1' });

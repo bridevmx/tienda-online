@@ -179,8 +179,12 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       carrito en cookie validado contra la base, simulador de IVA/comision solo para personal, SEO
       (titulo, canonical, JSON-LD, sitemap, robots). 197 tests unitarios + pruebas de integracion de la
       tienda (incluye que ninguna pagina publica filtre la comision).
-- [ ] **6. Ventas y pagos** — `placeOrder`, efectivo / Clip / transferencia, webhook, confirmacion de
-      transferencias, vencimiento de pedidos, `/admin/ventas`.
+- [x] **6. Ventas y pagos** — `placeOrder` transaccional (batch con `stock-`, reintentos), checkout web,
+      tarjeta por link de Clip con webhook idempotente (se re-consulta el estado a Clip; token en la
+      URL con comparacion en tiempo constante), transferencia con comprobante privado, cambio de
+      metodo, cancelacion, pago tardio, vencimiento por script (`npm run jobs:expire-orders`),
+      `/admin/ventas` (resumen, filtros) y detalle con confirmar / completar / cancelar / reembolsar.
+      Pruebas de integracion con doble de Clip y de SMTP (27 en total).
 - [ ] **7. Cuenta del cliente** — `/cuenta`, `/cuenta/perfil`, asociacion de pedidos de invitado.
 - [ ] **8. TPV.**
 - [ ] **9. Calidad** — tests de `computeTotals` (ejemplos de la seccion 5), `can`, schemas,

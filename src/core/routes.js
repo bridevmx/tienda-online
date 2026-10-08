@@ -35,6 +35,7 @@ export const routes = {
 		edit: (resource, id) => `/admin/${enc(resource)}/${enc(id)}`,
 		sales: () => '/admin/ventas',
 		sale: (id) => `/admin/ventas/${enc(id)}`,
+		saleProof: (id) => `/admin/ventas/${enc(id)}/comprobante`,
 		settings: () => '/admin/ajustes'
 	},
 

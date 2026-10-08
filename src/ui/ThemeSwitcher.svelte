@@ -2,7 +2,6 @@
 	import { THEMES, THEME_COOKIE } from '#core/themes.js';
 
 	let { current = THEMES[0].id } = $props();
-	let value = $state(current);
 
 	function apply(id) {
 		document.documentElement.setAttribute('data-theme', id);
@@ -14,8 +13,8 @@
 	<span>Tema</span>
 	<select
 		class="select select-sm"
-		bind:value
-		onchange={() => apply(value)}
+		value={current}
+		onchange={(e) => apply(e.currentTarget.value)}
 		aria-label="Cambiar tema"
 	>
 		{#each THEMES as theme (theme.id)}

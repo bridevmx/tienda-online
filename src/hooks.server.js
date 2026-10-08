@@ -1,8 +1,25 @@
-import { PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD, PB_URL } from '$app/env/private';
+import {
+	CLIP_API_KEY,
+	CLIP_API_SECRET,
+	CLIP_API_URL,
+	CLIP_WEBHOOK_TOKEN,
+	PB_ADMIN_EMAIL,
+	PB_ADMIN_PASSWORD,
+	PB_URL
+} from '$app/env/private';
 import { SESSION, loadCustomer, loadStaff } from '#core/auth.js';
 import { getAdminPb } from '#core/pb-admin.js';
 import { createPb } from '#core/pb.js';
+import { createClipClient } from '#modules/payments/clip.js';
+import { createSalesService } from '#modules/sales/service.js';
 import { readSettings } from '#modules/settings/service.js';
+
+const clip = createClipClient({
+	baseUrl: CLIP_API_URL,
+	key: CLIP_API_KEY,
+	secret: CLIP_API_SECRET,
+	webhookToken: CLIP_WEBHOOK_TOKEN
+});
 import { THEME_COOKIE, resolveTheme } from '#core/themes.js';
 
 const pbUrl = () => PB_URL;
@@ -18,6 +35,8 @@ const pbUrl = () => PB_URL;
  *   locals.customer    cliente con sesion { id, email, name, phone } o null
  *   locals.adminPb()   superusuario; solo checkout/pedidos, webhooks y lectura de ajustes
  *   locals.settings()  ajustes tipados de la tienda (cache de 30 s)
+ *   locals.clip        cliente de la API de Clip
+ *   locals.sales()     servicio de ventas (escribe con superusuario: comprobar permisos ANTES)
  *   locals.theme       tema de DaisyUI elegido
  */
 /** @type {import('@sveltejs/kit').Handle} */
@@ -38,6 +57,9 @@ export async function handle({ event, resolve }) {
 		});
 
 	locals.settings = () => readSettings(locals.adminPb);
+	locals.clip = clip;
+	locals.sales = async () =>
+		createSalesService({ pb: await locals.adminPb(), getSettings: locals.settings, clip });
 
 	const staffToken = cookies.get(SESSION.staff.cookie);
 	if (staffToken) {

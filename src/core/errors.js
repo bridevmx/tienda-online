@@ -3,8 +3,8 @@
  * `field` indica el campo del formulario al que se asocia el mensaje, si aplica.
  */
 export class DomainError extends Error {
-	constructor(message, { field = '_' } = {}) {
-		super(message);
+	constructor(message, { field = '_', cause } = {}) {
+		super(message, cause ? { cause } : undefined);
 		this.name = 'DomainError';
 		this.field = field;
 	}

@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { startClipMock } from './mocks/clip.js';
+import { CLIP_KEY, CLIP_SECRET, CLIP_WEBHOOK_TOKEN, startClipMock } from './mocks/clip.js';
 import { startSmtpSink } from './mocks/smtp.js';
 
 const ROOT = resolve(import.meta.dirname, '../..');
@@ -130,8 +130,9 @@ export default async function setup({ provide }) {
 			PROTOCOL_HEADER: 'x-forwarded-proto',
 			BODY_SIZE_LIMIT: '10M',
 			CLIP_API_URL: clip.url,
-			CLIP_API_KEY: 'test-key',
-			CLIP_API_SECRET: 'test-secret'
+			CLIP_API_KEY: CLIP_KEY,
+			CLIP_API_SECRET: CLIP_SECRET,
+			CLIP_WEBHOOK_TOKEN
 		},
 		stdio: process.env.IT_DEBUG ? 'inherit' : 'ignore'
 	});
@@ -144,7 +145,8 @@ export default async function setup({ provide }) {
 		superuser: SUPERUSER,
 		users: USERS,
 		smtpUrl: smtp.url,
-		clipUrl: clip.url
+		clipUrl: clip.url,
+		clipWebhookToken: CLIP_WEBHOOK_TOKEN
 	});
 
 	return async () => {

@@ -177,3 +177,63 @@ export async function saveSettings(boss, patch = {}) {
 	if (res.status !== 200)
 		throw new Error(`No pude guardar ajustes (${res.status}): ${res.text.slice(0, 300)}`);
 }
+
+// ---------------------------------------------------------------- Clip (doble)
+const clipCall = (path) =>
+	fetch(`${cfg.clipUrl}/__mock/${path}`, { method: 'POST' }).then((r) => r.json());
+export const clipMock = {
+	complete: (id) => clipCall(`complete/${id}`),
+	cancel: (id) => clipCall(`cancel/${id}`),
+	failNext: () => clipCall('fail-next'),
+	reset: () => clipCall('reset'),
+	requests: () => fetch(`${cfg.clipUrl}/__mock/requests`).then((r) => r.json())
+};
+
+/** Envia a la tienda un aviso como el de Clip (con o sin el token correcto). */
+export function sendClipWebhook(payload, { token = cfg?.clipWebhookToken, body } = {}) {
+	return raw(`/api/webhooks/clip${token === null ? '' : `?token=${encodeURIComponent(token)}`}`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', 'x-forwarded-proto': 'http' },
+		body: body ?? JSON.stringify(payload)
+	});
+}
+
+// ---------------------------------------------------------------- pedidos
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+
+/** Carrito de un "navegador": agrega variantes por SKU y devuelve el cliente. */
+export async function cartWith(items, browser = client()) {
+	for (const [sku, qty] of items) {
+		const variant = await first('variants', `sku="${sku}"`);
+		const res = await browser.post('/carrito?/add', { variant: variant.id, qty: String(qty) });
+		if (res.status !== 303) throw new Error(`No pude agregar ${sku}: ${res.status}`);
+	}
+	return browser;
+}
+
+/** Pedido por codigo (superusuario). */
+export const orderByCode = (code) => first('orders', `code="${code}"`);
+export const stockOf = async (sku) => (await first('variants', `sku="${sku}"`)).stock;
+
+/** Codigo y token del pedido a partir de la URL de redireccion /pedido/<codigo>?t=<token>. */
+export function parseOrderLocation(location) {
+	const m = String(location ?? '').match(/^\/pedido\/([A-Z]-\d{8}-[A-Z0-9]+)(?:\?t=([^&]+))?/);
+	return m ? { code: m[1], token: m[2] ? decodeURIComponent(m[2]) : '' } : null;
+}
+
+/** Ejecuta un script de scripts/ contra la instancia de pruebas. */
+export function runScript(script, args = [], env = {}) {
+	const root = resolve(import.meta.dirname, '../..');
+	return spawnSync('node', [script, ...args], {
+		cwd: root,
+		encoding: 'utf8',
+		env: {
+			...process.env,
+			PB_URL: cfg.pbUrl,
+			PB_ADMIN_EMAIL: cfg.superuser.email,
+			PB_ADMIN_PASSWORD: cfg.superuser.password,
+			...env
+		}
+	});
+}
