@@ -41,15 +41,16 @@ no coinciden. PocketBase debe quedar en red interna, sin exponerse a internet.
 
 ## Scripts
 
-| Comando                    | Que hace                                                                          |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| `npm run check`            | lint + colores + tests (lo mismo que CI, sin build)                               |
-| `npm test`                 | tests con Vitest                                                                  |
-| `npm run lint`             | ESLint + Prettier (`npm run format` arregla el formato)                           |
-| `npm run check:colors`     | falla si el markup usa `base-*`, `success`, `warning` o `accent`                  |
-| `npm run permissions:sync` | sincroniza permisos y roles base desde los modulos (`-- --prune` borra obsoletos) |
-| `npm run seed:catalog`     | datos de ejemplo del catálogo (idempotente)                                       |
-| `npm run build`            | build de produccion (`node build` para servirlo)                                  |
+| Comando                    | Que hace                                                                                      |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| `npm run check`            | lint + colores + tests (lo mismo que CI, sin build)                                           |
+| `npm test`                 | tests con Vitest                                                                              |
+| `npm run lint`             | ESLint + Prettier (`npm run format` arregla el formato)                                       |
+| `npm run check:colors`     | falla si el markup usa `base-*`, `success`, `warning` o `accent`                              |
+| `npm run permissions:sync` | sincroniza permisos y roles base desde los modulos (`-- --prune` borra obsoletos)             |
+| `npm run check:schema`     | verifica que toda colección termine con `created` y `updated` (necesita PocketBase en marcha) |
+| `npm run seed:catalog`     | datos de ejemplo del catálogo (idempotente)                                                   |
+| `npm run build`            | build de produccion (`node build` para servirlo)                                              |
 
 ## Convenciones
 

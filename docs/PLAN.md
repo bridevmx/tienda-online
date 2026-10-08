@@ -10,6 +10,10 @@ Documento vivo. Resume las decisiones acordadas y las fases. Marca `[x]` lo term
   SvelteKit. `pb_migrations/` solo contiene esquema (campos, indices unicos, relaciones, reglas).
 - **El navegador nunca habla con PocketBase**; solo SvelteKit, y PocketBase queda en red interna.
 - **Sin campos JSON** en el esquema: todo con colecciones y relaciones.
+- **Convencion de esquema:** toda coleccion termina con los campos `created` y `updated` (autodate), en
+  ese orden y al final. Al agregar campos a una coleccion en una migracion nueva hay que volver a
+  dejarlos al final (la migracion `1791500200_timestamps_last.js` lo hizo con las existentes);
+  `npm run check:schema` lo verifica contra una instancia en marcha.
 - **Funciones y modulos, sin clases.** Servicios con factory (`createXService(pb)`), nucleo funcional
   puro (`computeTotals`, `findVariant`) y cascaron imperativo (servicios, rutas).
 - **Una sola moneda (MXN) y solo espanol.** Dinero siempre en centavos enteros; tasas en puntos base.
