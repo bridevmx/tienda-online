@@ -9,7 +9,7 @@ const dir = fileURLToPath(new URL('../pocketbase', import.meta.url));
 const bin = join(dir, process.platform === 'win32' ? 'pocketbase.exe' : 'pocketbase');
 
 if (!existsSync(bin)) {
-	console.error('No hay binario de PocketBase. Ejecuta primero: pnpm pb:download');
+	console.error('No hay binario de PocketBase. Ejecuta primero: npm run pb:download');
 	process.exit(1);
 }
 

@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 
 const run = (cmd, args) =>
 	spawn(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' });
-const children = [run('node', ['scripts/pb-serve.js']), run('pnpm', ['dev'])];
+const children = [run('node', ['scripts/pb-serve.js']), run('npm', ['run', 'dev'])];
 
 let closing = false;
 function shutdown(code = 0) {

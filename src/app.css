@@ -7,7 +7,7 @@
  * Temas: solo 4 colores de marca (primary, secondary, info, error).
  * success, warning y accent existen unicamente porque DaisyUI los exige en sus
  * componentes: son alias de los 4 colores y NO se usan en nuestro markup
- * (lo vigila `pnpm check:colors`). Los tonos base-* y neutral son parte de la
+ * (lo vigila `npm run check:colors`). Los tonos base-* y neutral son parte de la
  * definicion del tema; en el markup tampoco se usan clases base-*.
  */
 @plugin 'daisyui/theme' {

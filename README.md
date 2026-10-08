@@ -5,29 +5,29 @@ Tienda web + TPV con **SvelteKit** (SSR, Node) y **PocketBase**. Plan completo y
 
 ## Requisitos
 
-- Node 22+ y pnpm 10+
+- Node 22+ y npm 10+
 
 ## Arranque
 
 ```bash
-pnpm install
+npm install
 cp .env.example .env      # ajusta PB_URL si hace falta
-pnpm pb:download          # descarga el binario de PocketBase a ./pocketbase (una vez)
-pnpm dev:all              # PocketBase (127.0.0.1:8090) + SvelteKit (localhost:5173)
+npm run pb:download          # descarga el binario de PocketBase a ./pocketbase (una vez)
+npm run dev:all              # PocketBase (127.0.0.1:8090) + SvelteKit (localhost:5173)
 ```
 
-Solo la web: `pnpm dev`. Solo PocketBase: `pnpm pb:serve`. En el primer arranque PocketBase pide
+Solo la web: `npm run dev`. Solo PocketBase: `npm run pb:serve`. En el primer arranque PocketBase pide
 crear el superusuario en `http://127.0.0.1:8090/_/`.
 
 ## Scripts
 
-| Comando             | Que hace                                                         |
-| ------------------- | ---------------------------------------------------------------- |
-| `pnpm check`        | lint + colores + tests (lo mismo que CI, sin build)              |
-| `pnpm test`         | tests con Vitest                                                 |
-| `pnpm lint`         | ESLint + Prettier (`pnpm format` arregla el formato)             |
-| `pnpm check:colors` | falla si el markup usa `base-*`, `success`, `warning` o `accent` |
-| `pnpm build`        | build de produccion (`node build` para servirlo)                 |
+| Comando                | Que hace                                                         |
+| ---------------------- | ---------------------------------------------------------------- |
+| `npm run check`        | lint + colores + tests (lo mismo que CI, sin build)              |
+| `npm test`             | tests con Vitest                                                 |
+| `npm run lint`         | ESLint + Prettier (`npm run format` arregla el formato)          |
+| `npm run check:colors` | falla si el markup usa `base-*`, `success`, `warning` o `accent` |
+| `npm run build`        | build de produccion (`node build` para servirlo)                 |
 
 ## Convenciones
 

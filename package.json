@@ -17,14 +17,9 @@
 		"lint": "eslint . && prettier --check .",
 		"format": "prettier --write .",
 		"check:colors": "node scripts/check-colors.js",
-		"check": "pnpm lint && pnpm check:colors && pnpm test",
+		"check": "npm run lint && npm run check:colors && npm test",
 		"pb:download": "node scripts/pb-download.js",
 		"pb:serve": "node scripts/pb-serve.js"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild"
-		]
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",

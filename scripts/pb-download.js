@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Descarga el binario de PocketBase a ./pocketbase (ignorado por git).
- * Uso: pnpm pb:download            (ultima version)
- *      PB_VERSION=x.y.z pnpm pb:download
+ * Uso: npm run pb:download            (ultima version)
+ *      PB_VERSION=x.y.z npm run pb:download
  */
 import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';

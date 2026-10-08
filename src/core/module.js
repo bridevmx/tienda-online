@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Un modulo es una carpeta en src/modules/<nombre> con un manifiesto (index.js) creado con
  * `defineModule`. El manifiesto es lo unico que se registra en src/modules/index.js: de el se
- * derivan el menu del admin, los permisos (pnpm permissions:sync) y los recursos del CRUD.
+ * derivan el menu del admin, los permisos (npm run permissions:sync) y los recursos del CRUD.
  */
 const permissionCode = z
 	.string()

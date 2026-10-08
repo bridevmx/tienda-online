@@ -113,7 +113,7 @@ vive en una sola funcion pura (`computeTotals`) para poder cambiarlo en un solo 
 
 - Solo clases de DaisyUI. **4 colores: `primary`, `secondary`, `info`, `error`.** `success`, `warning`
   y `accent` son alias en el tema (DaisyUI los exige) y **no se usan en el markup**; tampoco `base-*`.
-  `pnpm check:colors` lo vigila en CI.
+  `npm run check:colors` lo vigila en CI.
 - Significado: primary = accion principal / "pagado"; secondary = acciones secundarias / destacado;
   info = informativo / pendiente / stock bajo; error = errores / agotado / anulado.
 - Temas en `src/app.css`, registrados en `src/core/themes.js`; el tema se guarda en cookie y se
