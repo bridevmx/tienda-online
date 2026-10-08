@@ -28,7 +28,7 @@
 	</nav>
 	<div class="flex min-w-0 flex-col gap-4">
 		{#if !page.data.customer.verified}
-			<div role="status" class="alert alert-warning flex-wrap">
+			<div role="status" class="alert alert-info flex-wrap">
 				<span
 					>Verifica tu correo para vincular a tu cuenta los pedidos que hiciste como invitado.</span
 				>
