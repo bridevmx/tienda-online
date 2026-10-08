@@ -18,6 +18,7 @@ export const routes = {
 
 	// clientes (colecciones `customers`)
 	login: () => '/entrar',
+	logout: () => '/salir',
 	register: () => '/registro',
 	recover: () => '/recuperar',
 	verify: () => '/verificar',
@@ -27,6 +28,7 @@ export const routes = {
 	// personal (colecciones `users`)
 	admin: {
 		login: () => '/admin/entrar',
+		logout: () => '/admin/salir',
 		home: () => '/admin',
 		list: (resource) => `/admin/${enc(resource)}`,
 		create: (resource) => `/admin/${enc(resource)}/nuevo`,

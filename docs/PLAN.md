@@ -151,8 +151,11 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
 - [x] **0. Cimientos** — SvelteKit JS con `adapter-node`, Tailwind 4 + DaisyUI 5 con temas y control
       de colores en CI, Zod, Vitest, ESLint/Prettier, estructura `core/modules/ui`, scripts de
       PocketBase local, CI.
-- [ ] **1. Acceso** — `users`, `roles`, `permissions`, `customers`; `permissions:sync`; cookies y
-      `locals` dobles; `can()`, `requirePermission`; reglas de API.
+- [x] **1. Acceso** — `users`, `roles`, `permissions`, `customers`; `permissions:sync`; cookies y
+      `locals` dobles; `can()`, `requirePermission`; reglas de API. Login/logout de personal
+      (`/admin/entrar`) y de clientes (`/entrar`); registro, verificacion y recuperacion de clientes
+      quedan en la fase 7. Probado contra PocketBase 0.40.4 real (52 comprobaciones de flujo web y
+      reglas de API); falta convertirlo en pruebas automaticas con una instancia temporal (fase 9).
 - [ ] **2. Catalogo** — migraciones (categories, products, options, option_values, variants), reglas
       por rol, seed.
 - [ ] **3. Admin generico** — `/admin/[resource]`, `createCrudService`, DataTable y Form desde Zod;
@@ -167,7 +170,27 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
 - [ ] **9. Calidad** — tests de `computeTotals` (ejemplos de la seccion 5), `can`, schemas,
       `placeOrder`, que no se filtre la comision; Playwright de humo.
 
-## 12. Pendiente de validar
+## 12. Notas de implementacion (fase 1)
+
+- **Sesion:** la cookie (`pb_staff` / `pb_customer`, httpOnly, SameSite=Lax) guarda solo el token;
+  en cada solicitud se relee el registro con `role.permissions`, asi que revocar un permiso, cambiar
+  de rol o desactivar a alguien aplica de inmediato. Tokens: personal 12 h, clientes 30 dias.
+- **Aislamiento:** un token de cliente en la cookie de personal no da acceso (las reglas exigen
+  `@request.auth.collectionName = "users"`).
+- **Escalada de privilegios:** nadie puede cambiarse a si mismo el rol ni el estado, ni borrarse; los
+  roles `system` (admin) no se editan ni se borran desde la app; el admin se mantiene con
+  `permissions:sync`.
+- **`permissions:sync`** es idempotente: un permiso nuevo llega solo a los roles de su lista
+  `roles` (y a admin); un rol nuevo recibe sus permisos por defecto; lo editado en la app no se pisa.
+- **Registro de clientes abierto** (`createRule` vacio): un cliente no tiene privilegios fuera de sus
+  datos. Pendiente: limitar intentos (rate limit de PocketBase y/o en SvelteKit) en fase 7/9.
+- **SvelteKit 3:** la configuracion vive en `vite.config.js` (no hay `svelte.config.js`); los alias
+  `$core` etc. estan deprecados, por eso se usan subpath imports (`#core/*`).
+- **adapter-node 6:** el origen sale de las cabeceras; sin `PROTOCOL_HEADER` asume `https` (ver README).
+- **Descarga de PocketBase:** `npm run pb:download` resuelve la ultima version por GitHub o, si no se
+  puede, por el proxy de modulos de Go. Probado con 0.40.4 y el SDK `pocketbase` 0.28.1.
+
+## 13. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
 - Mecanismo de verificacion de webhooks de Clip (documentacion vigente).

@@ -4,7 +4,15 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
-	{ ignores: ['.svelte-kit/', 'build/', 'node_modules/', 'pocketbase/pb_data/'] },
+	{
+		ignores: [
+			'.svelte-kit/',
+			'build/',
+			'node_modules/',
+			'pocketbase/pb_data/',
+			'pocketbase/pb_migrations/'
+		]
+	},
 	js.configs.recommended,
 	...svelte.configs['flat/recommended'],
 	prettier,

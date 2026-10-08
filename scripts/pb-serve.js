@@ -17,8 +17,8 @@ const child = spawn(
 	bin,
 	[
 		'serve',
-		'--http=127.0.0.1:8090',
-		`--dir=${join(dir, 'pb_data')}`,
+		`--http=${process.env.PB_HTTP || '127.0.0.1:8090'}`,
+		`--dir=${process.env.PB_DATA_DIR || join(dir, 'pb_data')}`,
 		`--migrationsDir=${join(dir, 'pb_migrations')}`
 	],
 	{ stdio: 'inherit' }

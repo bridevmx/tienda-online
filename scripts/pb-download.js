@@ -20,14 +20,20 @@ export function assetName(version, platform = process.platform, arch = process.a
 	return `pocketbase_${version}_${os}_${cpu}.zip`;
 }
 
+/** Ultima version estable: primero el redirect de GitHub, si no, el proxy de modulos de Go. */
 async function latestVersion() {
-	const res = await fetch('https://github.com/pocketbase/pocketbase/releases/latest', {
-		redirect: 'manual'
-	});
-	const location = res.headers.get('location') ?? '';
-	const match = location.match(/\/tag\/v([^/]+)$/);
-	if (!match) throw new Error(`No pude resolver la ultima version (HTTP ${res.status}).`);
-	return match[1];
+	try {
+		const res = await fetch('https://github.com/pocketbase/pocketbase/releases/latest', {
+			redirect: 'manual'
+		});
+		const match = (res.headers.get('location') ?? '').match(/\/tag\/v([^/]+)$/);
+		if (match) return match[1];
+	} catch {
+		// se intenta la alternativa
+	}
+	const res = await fetch('https://proxy.golang.org/github.com/pocketbase/pocketbase/@latest');
+	if (!res.ok) throw new Error(`No pude resolver la ultima version (HTTP ${res.status}).`);
+	return (await res.json()).Version.replace(/^v/, '');
 }
 
 async function main() {

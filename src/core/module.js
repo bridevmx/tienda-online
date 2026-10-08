@@ -14,7 +14,14 @@ const manifestSchema = z.object({
 	label: z.string().min(1),
 	/** Permisos que declara el modulo; se sincronizan a la coleccion `permissions`. */
 	permissions: z
-		.array(z.object({ code: permissionCode, description: z.string().min(1) }))
+		.array(
+			z.object({
+				code: permissionCode,
+				description: z.string().min(1),
+				/** Roles que reciben este permiso por defecto cuando se crea (admin siempre los recibe). */
+				roles: z.array(z.string()).default([])
+			})
+		)
 		.default([]),
 	/** Recursos que el admin genera automaticamente (ver CRUD generico, fase 3). */
 	resources: z.array(z.object({ name: z.string().min(1) }).passthrough()).default([]),

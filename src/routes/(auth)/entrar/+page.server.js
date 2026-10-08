@@ -1,0 +1,38 @@
+import { fail, redirect } from '@sveltejs/kit';
+import { SESSION, authenticate, sessionCookieOptions } from '#core/auth.js';
+import { safeNext } from '#core/redirect.js';
+import { routes } from '#core/routes.js';
+import { parseForm } from '#core/validate.js';
+import { loginSchema } from '#modules/access/schema.js';
+
+const destination = (url) =>
+	safeNext(url.searchParams.get('next'), { prefix: '/', fallback: routes.account() });
+
+/** @type {import('./$types').PageServerLoad} */
+export function load({ locals, url }) {
+	if (locals.customer) redirect(303, destination(url));
+}
+
+/** @type {import('./$types').Actions} */
+export const actions = {
+	default: async ({ request, locals, cookies, url }) => {
+		const form = parseForm(loginSchema, await request.formData(), { omit: ['password'] });
+		if (!form.ok) return fail(400, { errors: form.errors, values: form.values });
+
+		const token = await authenticate(
+			locals.customerPb,
+			SESSION.customer.collection,
+			form.data.email,
+			form.data.password
+		);
+		if (!token) {
+			return fail(400, {
+				errors: { _: 'Correo o contraseña incorrectos' },
+				values: { email: form.data.email }
+			});
+		}
+
+		cookies.set(SESSION.customer.cookie, token, sessionCookieOptions(token));
+		redirect(303, destination(url));
+	}
+};

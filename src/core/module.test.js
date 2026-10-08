@@ -26,7 +26,7 @@ describe('defineModule', () => {
 describe('collectPermissions', () => {
 	it('aplana y marca el modulo de origen', () => {
 		expect(collectPermissions([catalog])).toEqual([
-			{ code: 'products:update', description: 'Editar productos', module: 'catalog' }
+			{ code: 'products:update', description: 'Editar productos', roles: [], module: 'catalog' }
 		]);
 	});
 	it('falla con permisos duplicados', () => {
