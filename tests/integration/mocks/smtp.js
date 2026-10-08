@@ -1,9 +1,16 @@
+import http from 'node:http';
 import net from 'node:net';
 
 /**
  * Servidor SMTP minimo que guarda los correos que envia PocketBase (verificacion, recuperacion,
  * cambio de correo) para que las pruebas lean los enlaces. Solo implementa lo que PocketBase usa.
  */
+/** Decodifica quoted-printable (los correos de PocketBase lo usan en el cuerpo). */
+const decodeQp = (text) =>
+	text
+		.replace(/=\r?\n/g, '')
+		.replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+
 export async function startSmtpSink() {
 	const messages = [];
 	const server = net.createServer((socket) => {
@@ -45,11 +52,23 @@ export async function startSmtpSink() {
 	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 	const { port } = server.address();
 
+	// los tests (otro proceso) leen los correos por HTTP: GET -> lista, DELETE -> vacia
+	const reader = http.createServer((req, res) => {
+		if (req.method === 'DELETE') messages.length = 0;
+		res.setHeader('content-type', 'application/json');
+		res.end(JSON.stringify(messages.map(({ to, data }) => ({ to, body: decodeQp(data) }))));
+	});
+	await new Promise((resolve) => reader.listen(0, '127.0.0.1', resolve));
+
 	return {
 		url: `smtp://127.0.0.1:${port}`,
+		inboxUrl: `http://127.0.0.1:${reader.address().port}`,
 		port,
 		messages,
-		stop: () => new Promise((resolve) => server.close(resolve)),
+		stop: () => {
+			reader.close();
+			return new Promise((resolve) => server.close(resolve));
+		},
 		/** Apunta PocketBase a este servidor SMTP y fija la URL publica de la tienda (enlaces de los correos). */
 		async configurePocketBase(pbUrl, superuser, appUrl) {
 			const auth = await fetch(`${pbUrl}/api/collections/_superusers/auth-with-password`, {

@@ -93,7 +93,13 @@ export async function loadCustomer(pb, token) {
 	pb.authStore.save(token, null);
 	try {
 		const record = await pb.collection(SESSION.customer.collection).getOne(id);
-		return { id: record.id, email: record.email, name: record.name, phone: record.phone ?? '' };
+		return {
+			id: record.id,
+			email: record.email,
+			name: record.name,
+			phone: record.phone ?? '',
+			verified: !!record.verified
+		};
 	} catch (err) {
 		if (isAuthFailure(err)) return null;
 		throw err;

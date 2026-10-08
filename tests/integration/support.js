@@ -45,10 +45,12 @@ export function raw(path, { method = 'GET', headers = {}, body } = {}) {
 /** "Navegador" con cookies: get / post (formulario) / multipart (con archivos). */
 export function client() {
 	const jar = new Map();
+	const ip = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
 	const send = async (path, opts = {}) => {
 		const headers = {
 			origin: cfg.webUrl,
 			'x-forwarded-proto': 'http',
+			'x-forwarded-for': ip,
 			accept: 'text/html',
 			...(opts.headers || {})
 		};
@@ -237,3 +239,21 @@ export function runScript(script, args = [], env = {}) {
 		}
 	});
 }
+
+// ---------------------------------------------------------------- correo (sumidero SMTP)
+export const inbox = {
+	all: () => fetch(cfg.inboxUrl).then((r) => r.json()),
+	clear: () => fetch(cfg.inboxUrl, { method: 'DELETE' }),
+	/** Ultimo correo para esa direccion (espera un poco: PocketBase lo envia en segundo plano). */
+	async last(to, { tries = 30 } = {}) {
+		for (let i = 0; i < tries; i++) {
+			const mail = (await inbox.all()).filter((m) => m.to.some((t) => t.includes(to))).pop();
+			if (mail) return mail;
+			await new Promise((r) => setTimeout(r, 100));
+		}
+		return null;
+	},
+	/** Primer enlace de la tienda en el cuerpo (ruta relativa). */
+	link: (mail) =>
+		mail?.body.match(/href="[^"]*?(\/(?:verificar|recuperar|correo)\/[^"]+)"/)?.[1] ?? null
+};

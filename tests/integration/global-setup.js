@@ -128,6 +128,7 @@ export default async function setup({ provide }) {
 			PORT: String(webPort),
 			HOST: '127.0.0.1',
 			PROTOCOL_HEADER: 'x-forwarded-proto',
+			ADDRESS_HEADER: 'x-forwarded-for',
 			BODY_SIZE_LIMIT: '10M',
 			CLIP_API_URL: clip.url,
 			CLIP_API_KEY: CLIP_KEY,
@@ -145,6 +146,7 @@ export default async function setup({ provide }) {
 		superuser: SUPERUSER,
 		users: USERS,
 		smtpUrl: smtp.url,
+		inboxUrl: smtp.inboxUrl,
 		clipUrl: clip.url,
 		clipWebhookToken: CLIP_WEBHOOK_TOKEN
 	});

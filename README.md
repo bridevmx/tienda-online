@@ -49,6 +49,8 @@ define `PROTOCOL_HEADER=x-forwarded-proto` y `HOST_HEADER=x-forwarded-host` (y h
 envie); si no, SvelteKit asume `https` y bloquea los formularios (`403 Cross-site POST`) o las cookies
 no coinciden. Sube `BODY_SIZE_LIMIT` (p. ej. `10M`) para poder subir imágenes de hasta 5 MB. PocketBase debe quedar en red interna, sin exponerse a internet.
 
+Correos de la cuenta (verificar, recuperar): configura SMTP en PocketBase y pon en _Settings → Application → Application URL_ la URL pública de la **tienda** (los enlaces de los correos apuntan a `/verificar`, `/recuperar` y `/correo`). Con proxy, define también `ADDRESS_HEADER=x-forwarded-for` para que el límite de intentos use la IP real.
+
 ## Scripts
 
 | Comando                    | Que hace                                                                                          |

@@ -185,7 +185,12 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       metodo, cancelacion, pago tardio, vencimiento por script (`npm run jobs:expire-orders`),
       `/admin/ventas` (resumen, filtros) y detalle con confirmar / completar / cancelar / reembolsar.
       Pruebas de integracion con doble de Clip y de SMTP (27 en total).
-- [ ] **7. Cuenta del cliente** — `/cuenta`, `/cuenta/perfil`, asociacion de pedidos de invitado.
+- [x] **7. Cuenta del cliente** — registro, verificacion de correo, recuperar contrasena y cambio de
+      correo (plantillas de PocketBase apuntando a `/verificar`, `/recuperar`, `/correo`; migracion
+      `1791500600`), `/cuenta` con pedidos en tarjetas, `/cuenta/perfil` (datos, correo, contrasena).
+      Los pedidos de invitado se vinculan solo con el correo YA verificado. Limite de intentos
+      (`core/rate-limit.js`, en memoria) en accesos, registro y envios de correo. 35 pruebas de
+      integracion (sumidero SMTP legible por HTTP). Detras de un proxy configura `ADDRESS_HEADER`.
 - [ ] **8. TPV.**
 - [ ] **9. Calidad** — tests de `computeTotals` (ejemplos de la seccion 5), `can`, schemas,
       `placeOrder`, que no se filtre la comision; Playwright de humo.

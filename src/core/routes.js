@@ -21,7 +21,9 @@ export const routes = {
 	logout: () => '/salir',
 	register: () => '/registro',
 	recover: () => '/recuperar',
-	verify: () => '/verificar',
+	verify: (token) => `/verificar/${enc(token)}`,
+	reset: (token) => `/recuperar/${enc(token)}`,
+	confirmEmail: (token) => `/correo/${enc(token)}`,
 	account: () => '/cuenta',
 	profile: () => '/cuenta/perfil',
 
