@@ -6,3 +6,16 @@ export const loginFailures = createRateLimiter({ max: 8, windowMs: 10 * 60_000 }
 export const mailActions = createRateLimiter({ max: 5, windowMs: 15 * 60_000 });
 
 export const TOO_MANY = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+
+/**
+ * IP del visitante para las llaves del limitador. `getClientAddress()` lanza si el servidor se
+ * configuro con ADDRESS_HEADER y la solicitud no la trae (p. ej. sin proxy): no debe tumbar el
+ * acceso, asi que se cae a una llave comun.
+ */
+export function clientKey(getClientAddress) {
+	try {
+		return getClientAddress();
+	} catch {
+		return 'unknown';
+	}
+}

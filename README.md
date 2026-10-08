@@ -58,6 +58,7 @@ Correos de la cuenta (verificar, recuperar): configura SMTP en PocketBase y pon 
 | `npm run check`            | lint + colores + tests (lo mismo que CI, sin build)                                               |
 | `npm test`                 | tests con Vitest                                                                                  |
 | `npm run test:integration` | pruebas de integración (PocketBase temporal + servidor compilado; necesita `npm run pb:download`) |
+| `npm run test:e2e`         | pruebas en navegador (Playwright + Chromium) sobre la misma pila; necesita `pb:download`          |
 | `npm run lint`             | ESLint + Prettier (`npm run format` arregla el formato)                                           |
 | `npm run check:colors`     | falla si el markup usa `base-*`, `success`, `warning` o `accent`                                  |
 | `npm run permissions:sync` | sincroniza permisos y roles base desde los modulos (`-- --prune` borra obsoletos)                 |

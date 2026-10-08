@@ -10,6 +10,7 @@ import {
 	orderByCode,
 	parseOrderLocation,
 	pbRaw,
+	raw,
 	saveSettings,
 	staff,
 	uid
@@ -246,6 +247,21 @@ describe.skipIf(!enabled)('cuenta del cliente', () => {
 			'el viejo ya no',
 			(await client().post('/entrar', { email, password: 'Otra-clave-77' })).status === 400
 		);
+	});
+
+	it('sin cabecera de IP (sin proxy) el acceso sigue funcionando', async () => {
+		const { email } = await register();
+		const r = await raw('/entrar', {
+			method: 'POST',
+			headers: {
+				origin: cfg.webUrl,
+				'x-forwarded-proto': 'http',
+				accept: 'text/html',
+				'content-type': 'application/x-www-form-urlencoded'
+			},
+			body: new URLSearchParams({ email, password: PASS }).toString()
+		});
+		ok('no es un 500', r.status === 303, r.status);
 	});
 
 	it('/cuenta exige sesion y conserva a donde iba', async () => {

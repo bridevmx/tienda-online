@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { SESSION, authenticate, sessionCookieOptions } from '#core/auth.js';
 import { DomainError } from '#core/errors.js';
 import { setFlash } from '#core/flash.js';
-import { mailActions, TOO_MANY } from '#core/limits.js';
+import { mailActions, TOO_MANY, clientKey } from '#core/limits.js';
 import { fromPbError } from '#core/pb-errors.js';
 import { routes } from '#core/routes.js';
 import { parseForm } from '#core/validate.js';
@@ -47,7 +47,7 @@ export const actions = {
 			});
 		if (
 			mailActions.hit(`email:${locals.customer.id}`) ||
-			mailActions.hit(`email:${getClientAddress()}`)
+			mailActions.hit(`email:${clientKey(getClientAddress)}`)
 		)
 			return fail(429, { section: 'email', errors: { _: TOO_MANY }, values: form.values });
 		try {

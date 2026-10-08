@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { SESSION } from '#core/auth.js';
 import { setFlash } from '#core/flash.js';
-import { mailActions, TOO_MANY } from '#core/limits.js';
+import { mailActions, TOO_MANY, clientKey } from '#core/limits.js';
 import { routes } from '#core/routes.js';
 import { listCustomerOrders } from '#modules/customers/orders.js';
 
@@ -22,7 +22,7 @@ export const actions = {
 		if (!locals.customer) redirect(303, routes.login());
 		if (
 			mailActions.hit(`verify:${locals.customer.id}`) ||
-			mailActions.hit(`verify:${getClientAddress()}`)
+			mailActions.hit(`verify:${clientKey(getClientAddress)}`)
 		)
 			return fail(429, { errors: { _: TOO_MANY } });
 		await locals.customerPb

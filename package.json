@@ -26,7 +26,8 @@
 		"seed:catalog": "node --env-file-if-exists=.env scripts/seed-catalog.js",
 		"check:schema": "node --env-file-if-exists=.env scripts/check-schema.js",
 		"test:integration": "vitest run --config vitest.integration.config.js",
-		"jobs:expire-orders": "node --env-file-if-exists=.env scripts/jobs/expire-orders.js"
+		"jobs:expire-orders": "node --env-file-if-exists=.env scripts/jobs/expire-orders.js",
+		"test:e2e": "vitest run --config vitest.e2e.config.js"
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",
@@ -36,6 +37,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@playwright/test": "^1.56.1",
 		"@sveltejs/adapter-node": "^6.0.0",
 		"@sveltejs/kit": "^3.0.1",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
@@ -45,6 +47,7 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
 		"globals": "^17.13.0",
+		"playwright": "^1.56.1",
 		"prettier": "^3.9.9",
 		"prettier-plugin-svelte": "^4.1.1",
 		"svelte": "^5.57.2",

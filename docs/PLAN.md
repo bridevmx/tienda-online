@@ -199,8 +199,13 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       imprimible, solo del propio cajero o de quien tiene `orders:read`). Reutiliza `placeOrder`
       (`channel: 'pos'`, `confirmNow`, `createdBy`). El efectivo recibido solo se usa para el cambio
       del ticket (no se guarda). Mobbin: tickets tipo punto de venta y tarjetas apiladas.
-- [ ] **9. Calidad** — tests de `computeTotals` (ejemplos de la seccion 5), `can`, schemas,
-      `placeOrder`, que no se filtre la comision; Playwright de humo.
+- [x] **9. Calidad** — 269 unitarias (incluye los casos de referencia de `computeTotals`, `can`,
+      schemas, mapeadores), 45 de integracion por HTTP (acceso, catalogo, admin, ajustes, tienda,
+      pedidos, ventas, cuenta, TPV, esquema y reglas de la API; comprueban que la comision nunca llega
+      al cliente) y 4 de navegador con Playwright (tienda -> pedido, admin, TPV con lector de codigos y
+      cambio). CI en GitHub Actions: lint, colores, unitarias, build, integracion y navegador.
+      Hallazgos corregidos en esta fase: `getClientAddress()` lanzaba sin proxy (500 en el login) y el
+      limite de intentos por correo permitia bloquear cuentas ajenas (ahora es por IP e IP+correo).
 
 ## 12. Notas de implementacion (fase 1)
 
@@ -215,7 +220,7 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
 - **`permissions:sync`** es idempotente: un permiso nuevo llega solo a los roles de su lista
   `roles` (y a admin); un rol nuevo recibe sus permisos por defecto; lo editado en la app no se pisa.
 - **Registro de clientes abierto** (`createRule` vacio): un cliente no tiene privilegios fuera de sus
-  datos. Pendiente: limitar intentos (rate limit de PocketBase y/o en SvelteKit) en fase 7/9.
+  datos. Intentos de acceso, registro y envios de correo limitados en memoria (fase 7).
 - **SvelteKit 3:** la configuracion vive en `vite.config.js` (no hay `svelte.config.js`); los alias
   `$core` etc. estan deprecados, por eso se usan subpath imports (`#core/*`).
 - **adapter-node 6:** el origen sale de las cabeceras; sin `PROTOCOL_HEADER` asume `https` (ver README).
@@ -320,6 +325,11 @@ de aviso usan `info` y `error` (el tema no tiene "success").
 ## 17. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
-- Mecanismo de verificacion de webhooks de Clip (documentacion vigente).
+- Mecanismo de verificacion de webhooks de Clip (documentacion vigente) y estados reales de su API: el
+  cliente se escribio a partir de documentacion publica y se prueba contra un doble; validar en sandbox.
+- El limitador de intentos es en memoria (una instancia de Node); con varias instancias usar el de
+  PocketBase o un almacen compartido.
+- Efectivo recibido en el TPV: solo se usa para el cambio del ticket; si se quiere cuadre de caja
+  (apertura/cierre), es la funcion futura de "abrir caja".
 - Version de PocketBase: batch transaccional y modificador `stock-`.
 - Variables obligatorias de temas de DaisyUI al agregar nuevos temas.

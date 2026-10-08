@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { SESSION, authenticate, sessionCookieOptions } from '#core/auth.js';
-import { loginFailures, TOO_MANY } from '#core/limits.js';
+import { loginFailures, TOO_MANY, clientKey } from '#core/limits.js';
 import { safeNext } from '#core/redirect.js';
 import { routes } from '#core/routes.js';
 import { parseForm } from '#core/validate.js';
@@ -28,7 +28,9 @@ export const actions = {
 		const form = parseForm(loginSchema, await request.formData(), { omit: ['password'] });
 		if (!form.ok) return fail(400, { errors: form.errors, values: form.values });
 
-		const keys = [`staff:${getClientAddress()}`, `staff:${form.data.email.toLowerCase()}`];
+		// por IP y por IP + correo: un atacante no puede bloquear la cuenta de otra persona desde otra IP
+		const ip = clientKey(getClientAddress);
+		const keys = [`staff:${ip}`, `staff:${ip}:${form.data.email.toLowerCase()}`];
 		if (keys.some((k) => loginFailures.isLimited(k)))
 			return fail(429, { errors: { _: TOO_MANY }, values: { email: form.data.email } });
 

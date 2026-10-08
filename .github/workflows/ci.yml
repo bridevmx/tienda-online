@@ -3,6 +3,10 @@ on:
   push:
   pull_request:
 
+env:
+  # version de PocketBase con la que se desarrolla y se prueba (ver pocketbase/.version)
+  PB_VERSION: ${{ vars.PB_VERSION || '0.40.4' }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -18,3 +22,22 @@ jobs:
       - run: npm run check:colors
       - run: npm test
       - run: npm run build
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx svelte-kit sync
+      - run: npm run pb:download
+      - name: Pruebas de integracion (PocketBase temporal + servidor compilado)
+        run: npm run test:integration
+      - name: Navegador (Playwright + Chromium)
+        run: |
+          npx playwright install --with-deps chromium
+          IT_SKIP_BUILD=1 npm run test:e2e

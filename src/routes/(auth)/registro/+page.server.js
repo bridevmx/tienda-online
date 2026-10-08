@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { SESSION, authenticate, sessionCookieOptions } from '#core/auth.js';
 import { setFlash } from '#core/flash.js';
-import { mailActions, TOO_MANY } from '#core/limits.js';
+import { mailActions, TOO_MANY, clientKey } from '#core/limits.js';
 import { fromPbError } from '#core/pb-errors.js';
 import { safeNext } from '#core/redirect.js';
 import { routes } from '#core/routes.js';
@@ -21,7 +21,7 @@ export const actions = {
 	default: async ({ request, locals, cookies, url, getClientAddress }) => {
 		const form = parseForm(registerSchema, await request.formData(), { omit: OMIT });
 		if (!form.ok) return fail(400, { errors: form.errors, values: form.values });
-		if (mailActions.hit(`register:${getClientAddress()}`))
+		if (mailActions.hit(`register:${clientKey(getClientAddress)}`))
 			return fail(429, { errors: { _: TOO_MANY }, values: form.values });
 
 		const { name, email, phone, password } = form.data;
