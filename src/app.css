@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+	themes: false;
+}
+
+/*
+ * Temas: solo 4 colores de marca (primary, secondary, info, error).
+ * success, warning y accent existen unicamente porque DaisyUI los exige en sus
+ * componentes: son alias de los 4 colores y NO se usan en nuestro markup
+ * (lo vigila `pnpm check:colors`). Los tonos base-* y neutral son parte de la
+ * definicion del tema; en el markup tampoco se usan clases base-*.
+ */
+@plugin 'daisyui/theme' {
+	name: 'tienda';
+	default: true;
+	color-scheme: light;
+	--color-base-100: oklch(99% 0.003 270);
+	--color-base-200: oklch(96.5% 0.006 270);
+	--color-base-300: oklch(92% 0.01 270);
+	--color-base-content: oklch(24% 0.02 270);
+	--color-neutral: oklch(30% 0.03 270);
+	--color-neutral-content: oklch(95% 0.005 270);
+
+	--color-primary: oklch(52% 0.22 280);
+	--color-primary-content: oklch(98% 0.01 280);
+	--color-secondary: oklch(70% 0.14 180);
+	--color-secondary-content: oklch(22% 0.04 180);
+	--color-info: oklch(72% 0.13 235);
+	--color-info-content: oklch(22% 0.05 235);
+	--color-error: oklch(58% 0.22 25);
+	--color-error-content: oklch(98% 0.01 25);
+
+	/* alias (ver nota arriba) */
+	--color-accent: var(--color-secondary);
+	--color-accent-content: var(--color-secondary-content);
+	--color-success: var(--color-primary);
+	--color-success-content: var(--color-primary-content);
+	--color-warning: var(--color-info);
+	--color-warning-content: var(--color-info-content);
+
+	--radius-selector: 0.5rem;
+	--radius-field: 0.375rem;
+	--radius-box: 0.75rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+	name: 'tienda-noche';
+	prefersdark: true;
+	color-scheme: dark;
+	--color-base-100: oklch(22% 0.02 270);
+	--color-base-200: oklch(19% 0.02 270);
+	--color-base-300: oklch(16% 0.02 270);
+	--color-base-content: oklch(92% 0.01 270);
+	--color-neutral: oklch(30% 0.03 270);
+	--color-neutral-content: oklch(92% 0.01 270);
+
+	--color-primary: oklch(70% 0.17 280);
+	--color-primary-content: oklch(20% 0.05 280);
+	--color-secondary: oklch(76% 0.13 180);
+	--color-secondary-content: oklch(20% 0.04 180);
+	--color-info: oklch(76% 0.12 235);
+	--color-info-content: oklch(20% 0.05 235);
+	--color-error: oklch(70% 0.19 25);
+	--color-error-content: oklch(20% 0.06 25);
+
+	--color-accent: var(--color-secondary);
+	--color-accent-content: var(--color-secondary-content);
+	--color-success: var(--color-primary);
+	--color-success-content: var(--color-primary-content);
+	--color-warning: var(--color-info);
+	--color-warning-content: var(--color-info-content);
+
+	--radius-selector: 0.5rem;
+	--radius-field: 0.375rem;
+	--radius-box: 0.75rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 0;
+}

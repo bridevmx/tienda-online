@@ -1,0 +1,18 @@
+node_modules
+.svelte-kit
+build
+.env
+.env.*
+!.env.example
+
+# PocketBase: binario y datos locales (el esquema vive en pb_migrations)
+pocketbase/pocketbase
+pocketbase/pocketbase.exe
+pocketbase/pb_data
+pocketbase/.version
+pocketbase/*.zip
+
+.DS_Store
+coverage
+playwright-report
+test-results
