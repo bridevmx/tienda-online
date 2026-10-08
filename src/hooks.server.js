@@ -1,10 +1,11 @@
-import { env } from '$env/dynamic/private';
+import { PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD, PB_URL } from '$app/env/private';
 import { SESSION, loadCustomer, loadStaff } from '#core/auth.js';
 import { getAdminPb } from '#core/pb-admin.js';
 import { createPb } from '#core/pb.js';
+import { readSettings } from '#modules/settings/service.js';
 import { THEME_COOKIE, resolveTheme } from '#core/themes.js';
 
-const pbUrl = () => env.PB_URL || 'http://127.0.0.1:8090';
+const pbUrl = () => PB_URL;
 
 /**
  * Llena `locals` en cada solicitud. Aqui solo se LEE la sesion; decidir quien entra a donde es
@@ -15,7 +16,8 @@ const pbUrl = () => env.PB_URL || 'http://127.0.0.1:8090';
  *   locals.permissions Set de codigos de permiso del personal
  *   locals.customerPb  cliente de PocketBase con el token del cliente (o anonimo)
  *   locals.customer    cliente con sesion { id, email, name, phone } o null
- *   locals.adminPb()   superusuario; solo checkout de invitado y webhooks
+ *   locals.adminPb()   superusuario; solo checkout/pedidos, webhooks y lectura de ajustes
+ *   locals.settings()  ajustes tipados de la tienda (cache de 30 s)
  *   locals.theme       tema de DaisyUI elegido
  */
 /** @type {import('@sveltejs/kit').Handle} */
@@ -31,9 +33,11 @@ export async function handle({ event, resolve }) {
 	locals.adminPb = () =>
 		getAdminPb({
 			url: pbUrl(),
-			email: env.PB_ADMIN_EMAIL,
-			password: env.PB_ADMIN_PASSWORD
+			email: PB_ADMIN_EMAIL,
+			password: PB_ADMIN_PASSWORD
 		});
+
+	locals.settings = () => readSettings(locals.adminPb);
 
 	const staffToken = cookies.get(SESSION.staff.cookie);
 	if (staffToken) {

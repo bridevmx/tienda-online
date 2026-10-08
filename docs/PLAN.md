@@ -169,7 +169,11 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       (con sus variantes) y variantes, con imagenes. Probado contra PocketBase 0.40.4 (80 comprobaciones
       del admin por HTTP, mas las de fases 1 y 2); 123 tests unitarios. Pendiente: generador de
       combinaciones de variantes y administrar `users`/`customers` desde el admin.
-- [ ] **4. Ajustes** — `settings` con registro Zod, `/admin/ajustes`.
+- [x] **4. Ajustes** — coleccion `settings` (clave-valor), registro Zod con tipos y valores por defecto,
+      lectura cacheada para el servidor y `/admin/ajustes` (solo admin: incluye la comision de Clip).
+      Se agrego la infraestructura de **pruebas de integracion** (`npm run test:integration`): PocketBase
+      temporal + servidor compilado + dobles de SMTP y de Clip; las comprobaciones de las fases 1-3 ya
+      corren ahi.
 - [ ] **5. Precios y tienda** — `computeTotals`, `PriceBreakdown`, listado, detalle con selector de
       variantes (`findVariant`), carrito, simulador para personal.
 - [ ] **6. Ventas y pagos** — `placeOrder`, efectivo / Clip / transferencia, webhook, confirmacion de
@@ -259,7 +263,23 @@ a medias. En campos de varios archivos se agregan (`campo+`) y se quitan con cas
 **Mensajes:** una cookie de un solo uso (`flash`) muestra el aviso tras guardar o eliminar. Los colores
 de aviso usan `info` y `error` (el tema no tiene "success").
 
-## 15. Pendiente de validar
+## 15. Notas de implementacion (fase 4)
+
+- **Ajustes:** `settings` guarda solo `key` y `value` (texto); `src/modules/settings/registry.js` define
+  cada clave (tipo, defecto, etiqueta, validacion) y es la fuente de verdad. Un valor igual al defecto
+  no crea registro; un booleano que el formulario no envia queda apagado. Leer ajustes en el servidor:
+  `await locals.settings()` (cache de 30 s que se invalida al guardar; usa `locals.adminPb`).
+- **Variables de entorno en SvelteKit 3:** solo existen las declaradas en `src/env.js`
+  (`defineEnvVars`) y se leen con `$app/env/private`; `$env/dynamic/private` ya no entrega las no
+  declaradas. Hasta la fase 3 el servidor ignoraba `PB_URL` (siempre usaba 8090); lo destapo la nueva
+  infraestructura de integracion, que usa puertos aleatorios.
+- **Pruebas de integracion** (`tests/integration`): `global-setup.js` levanta PocketBase en un directorio
+  temporal (migraciones + `permissions:sync` + personal + catalogo de ejemplo), compila y arranca el
+  servidor, y un SMTP y un Clip de mentira; `support.js` trae un "navegador" con cookies
+  (`client()`/`staff()`), acceso a la API de PocketBase y `ok()`. Sin binario de PocketBase se omiten.
+  `IT_SKIP_BUILD=1` reutiliza `build/`; `IT_DEBUG=1` muestra los logs de los servidores.
+
+## 16. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
 - Mecanismo de verificacion de webhooks de Clip (documentacion vigente).

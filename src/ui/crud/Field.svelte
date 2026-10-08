@@ -39,6 +39,18 @@
 			value={value ?? ''}
 			required={field.required}
 		/>
+	{:else if field.type === 'percent'}
+		<label class="input w-full {error ? 'input-error' : ''}">
+			<input
+				id={`f-${field.name}`}
+				name={field.name}
+				inputmode="decimal"
+				placeholder="0"
+				value={value ?? ''}
+				required={field.required}
+			/>
+			<span class="opacity-60">%</span>
+		</label>
 	{:else if field.type === 'money'}
 		<label class="input w-full {error ? 'input-error' : ''}">
 			<span class="opacity-60">$</span>

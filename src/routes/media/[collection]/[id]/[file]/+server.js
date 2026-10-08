@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { PB_URL } from '$app/env/private';
 
 /**
  * Sirve los archivos de PocketBase desde la propia app: el navegador nunca habla con PocketBase.
@@ -18,9 +18,8 @@ export async function GET({ params, url, fetch }) {
 	const thumb = url.searchParams.get('thumb');
 	if (thumb && !THUMBS.has(thumb)) error(404, 'No encontrado');
 
-	const base = env.PB_URL || 'http://127.0.0.1:8090';
 	const upstream = await fetch(
-		`${base}/api/files/${collection}/${id}/${encodeURIComponent(file)}${thumb ? `?thumb=${thumb}` : ''}`
+		`${PB_URL}/api/files/${collection}/${id}/${encodeURIComponent(file)}${thumb ? `?thumb=${thumb}` : ''}`
 	);
 	const type = upstream.headers.get('content-type') ?? '';
 	if (!upstream.ok || !type.startsWith('image/')) error(404, 'No encontrado');
