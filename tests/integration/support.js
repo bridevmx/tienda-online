@@ -152,3 +152,28 @@ export const first = async (collection, filter) =>
 export const count = async (collection, filter) =>
 	(await (await su()).collection(collection).getList(1, 1, { filter })).totalItems;
 export const uid = () => Math.random().toString(36).slice(2, 8);
+
+// ---------------------------------------------------------------- ajustes
+const DEFAULT_SETTINGS_FORM = {
+	'store.name': 'Tienda online',
+	'store.contact_email': '',
+	'store.contact_phone': '',
+	'tax.apply_iva': 'on',
+	'tax.iva_rate': '16',
+	'clip.apply_fee': 'off',
+	'clip.fee_rate': '2.9',
+	'clip.fee_fixed': '0',
+	'pricing.discount_non_card': 'on',
+	'orders.pending_ttl_hours': '24',
+	'transfer.beneficiary': '',
+	'transfer.bank': '',
+	'transfer.clabe': '',
+	'transfer.instructions': ''
+};
+
+/** Guarda ajustes como admin: parte de los valores por defecto y aplica `patch` (para no depender del orden de las pruebas). */
+export async function saveSettings(boss, patch = {}) {
+	const res = await boss.post('/admin/ajustes', { ...DEFAULT_SETTINGS_FORM, ...patch });
+	if (res.status !== 200)
+		throw new Error(`No pude guardar ajustes (${res.status}): ${res.text.slice(0, 300)}`);
+}

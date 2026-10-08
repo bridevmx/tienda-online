@@ -12,7 +12,7 @@
 </script>
 
 {#if flash && visible}
-	<div class="toast toast-top toast-end z-50" role="status">
+	<div class="toast toast-bottom toast-end z-50" role="status">
 		<div class="alert {flash.type === 'error' ? 'alert-error' : 'alert-info'}">
 			<span>{flash.text}</span>
 		</div>

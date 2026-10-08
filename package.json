@@ -29,6 +29,7 @@
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",
+		"sanitize-html": "^2.18.0",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {

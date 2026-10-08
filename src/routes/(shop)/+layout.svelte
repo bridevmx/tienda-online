@@ -1,7 +1,7 @@
 <script>
-	import PublicShell from '#ui/PublicShell.svelte';
+	import ShopShell from '#ui/shop/ShopShell.svelte';
 
 	let { children } = $props();
 </script>
 
-<PublicShell>{@render children()}</PublicShell>
+<ShopShell>{@render children()}</ShopShell>

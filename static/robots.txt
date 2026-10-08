@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /tpv
+Disallow: /api
+Disallow: /cuenta
+Disallow: /carrito
+Disallow: /checkout

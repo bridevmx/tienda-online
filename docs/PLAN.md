@@ -79,7 +79,7 @@ Efectivo / transferencia (con pricing.discount_non_card): descuento = B − prec
 ```
 
 Ejemplo (precio 1,000, IVA 16 %, Clip 2.9 % + IVA): tarjeta 1,040.61 + 166.50 = **1,207.11**;
-efectivo/transferencia 1,040.61 − 40.61 + 160.00 = **1,160.00**; sin IVA: 1,034.81 / 1,000.00.
+efectivo/transferencia 1,040.61 − 40.61 + 160.00 = **1,160.00**; sin IVA: 1,034.82 / 1,000.00.
 Todo se redondea hacia arriba al centavo. **Validar con el contador** el tratamiento fiscal; el calculo
 vive en una sola funcion pura (`computeTotals`) para poder cambiarlo en un solo lugar.
 
@@ -174,8 +174,11 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       Se agrego la infraestructura de **pruebas de integracion** (`npm run test:integration`): PocketBase
       temporal + servidor compilado + dobles de SMTP y de Clip; las comprobaciones de las fases 1-3 ya
       corren ahi.
-- [ ] **5. Precios y tienda** — `computeTotals`, `PriceBreakdown`, listado, detalle con selector de
-      variantes (`findVariant`), carrito, simulador para personal.
+- [x] **5. Precios y tienda** — `computeTotals` (BigInt, con casos de referencia y propiedades),
+      portada, listado con busqueda, categorias, detalle con selector de variantes (enlaces, sin JS),
+      carrito en cookie validado contra la base, simulador de IVA/comision solo para personal, SEO
+      (titulo, canonical, JSON-LD, sitemap, robots). 197 tests unitarios + pruebas de integracion de la
+      tienda (incluye que ninguna pagina publica filtre la comision).
 - [ ] **6. Ventas y pagos** — `placeOrder`, efectivo / Clip / transferencia, webhook, confirmacion de
       transferencias, vencimiento de pedidos, `/admin/ventas`.
 - [ ] **7. Cuenta del cliente** — `/cuenta`, `/cuenta/perfil`, asociacion de pedidos de invitado.
@@ -279,7 +282,26 @@ de aviso usan `info` y `error` (el tema no tiene "success").
   (`client()`/`staff()`), acceso a la API de PocketBase y `ok()`. Sin binario de PocketBase se omiten.
   `IT_SKIP_BUILD=1` reutiliza `build/`; `IT_DEBUG=1` muestra los logs de los servidores.
 
-## 16. Pendiente de validar
+## 16. Notas de implementacion (fase 5)
+
+- **`computeTotals`** (`core/pricing.js`) usa BigInt y redondea hacia arriba; los casos de referencia son
+  tests. Propiedad verificada: con tarjeta, a la tienda le queda el precio guardado (±1-2 centavos a su
+  favor). El cargo fijo de Clip tambien se integra. `customerView` {subtotal, discount, iva, total} es lo
+  unico que llega al navegador; `internal` {clipFee, clipFeeIva, net} solo al personal.
+- **Estructura "view/server":** `buildCart()` devuelve `view` (serializable, sin precios base ni comision) y
+  `server` (lo que necesita el checkout). Los listados y la pagina de producto reciben solo precios
+  finales por metodo; existencias reales solo hasta 10 piezas. Una prueba de integracion rastrea todas
+  las paginas publicas buscando "Clip", "comision" y llaves internas en HTML y datos serializados.
+- **Carrito:** cookie `cart` [{v, q}] (30 dias, httpOnly); precios, stock y disponibilidad se leen
+  SIEMPRE de la base. Las lineas se repartiran el TOTAL (con IVA, igual que la pagina de producto) por
+  mayor residuo para que sumen exacto. Lo no comprable se marca y bloquea el pago.
+- **Pagina de producto:** la seleccion (`?v=<valor>`) vive en la URL: funciona sin JS, se comparte y el
+  chip de un valor agotado/imposible se ve distinto. El simulador del personal conserva `?iva=&clip=`.
+- **Descripcion HTML:** se sanea en el servidor (`sanitize-html`, `core/html.js`); `{@html}` solo se usa
+  con contenido saneado o JSON propio.
+- **Variables en desarrollo:** en `vite dev` las variables salen de `.env` (copia `.env.example`).
+
+## 17. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
 - Mecanismo de verificacion de webhooks de Clip (documentacion vigente).
