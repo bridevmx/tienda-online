@@ -6,6 +6,7 @@ import {
 	cfg,
 	cartWith,
 	client,
+	clipEvent,
 	clipMock,
 	count,
 	enabled,
@@ -19,6 +20,7 @@ import {
 	sendClipWebhook,
 	staff,
 	stockOf,
+	waitFor,
 	su as suPb
 } from './support.js';
 
@@ -50,7 +52,7 @@ async function checkout(browser, method, extra = {}) {
 	const res = await browser.post('/checkout', { ...contact, method, ...extra });
 	return { res, loc: parseOrderLocation(res.location) };
 }
-const clipId = (location) => String(location).match(/\/pay\/(req-\d+)$/)?.[1];
+const clipId = (location) => String(location).match(/\/pay\/([0-9a-f]{8}-[0-9a-f-]{27})$/)?.[1];
 
 describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y vencimiento', () => {
 	let boss;
@@ -206,6 +208,7 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 
 	it('validaciones del checkout y proteccion contra manipulacion', async () => {
 		const stock = await stockOf('GOR-AZU');
+		const pendingBefore = await count('orders', 'status="pending"');
 		const b = await cartWith([['GOR-AZU', 1]]);
 		let { res } = await checkout(b, 'transfer', { email: 'no-es-correo' });
 		ok(
@@ -228,7 +231,7 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 		ok(
 			'nada se creo ni se reservo',
 			(await stockOf('GOR-AZU')) === stock &&
-				(await count('orders', `contact_email="${contact.email}" && status="pending"`)) === 0
+				(await count('orders', 'status="pending"')) === pendingBefore
 		);
 
 		const empty = client();
@@ -312,9 +315,18 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 				create.body.amount === card.total / 100 &&
 				create.body.currency === 'MXN'
 		);
-		const order = await first(
-			'orders',
-			`payment_method="card_clip" && status="pending" && total=${card.total}`
+		const order = await (
+			await suPb()
+		)
+			.collection('orders')
+			.getOne((await first('payments', `provider_ref="${id}"`)).order);
+		ok(
+			'referencia propia firmada (<= 36), URLs error/default y solo credito/debito',
+			create.body.metadata.external_reference.length <= 36 &&
+				/^TDA-[a-z0-9]{15}-[A-Za-z0-9]{8}$/.test(create.body.metadata.external_reference) &&
+				create.body.redirection_url.default.endsWith('/') &&
+				create.body.redirection_url.error.includes('pago=error') &&
+				create.body.custom_payment_options.payment_method_types.join() === 'credit,debit'
 		);
 		ok(
 			'URLs de retorno y webhook con token',
@@ -328,7 +340,8 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 			'el pago guarda la referencia y el link',
 			payment.provider_ref === id &&
 				payment.provider_url === res.location &&
-				payment.status === 'pending'
+				payment.status === 'pending' &&
+				payment.reference === create.body.metadata.external_reference
 		);
 		const fin = await first('order_financials', `order="${order.id}"`);
 		ok(
@@ -345,78 +358,68 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 		);
 
 		// ---- seguridad del webhook
-		ok(
-			'sin token -> 403',
-			(await sendClipWebhook({ payment_request_id: id }, { token: null })).status === 403
-		);
+		ok('sin token -> 403', (await sendClipWebhook(clipEvent(id), { token: null })).status === 403);
 		ok(
 			'token incorrecto -> 403',
-			(await sendClipWebhook({ payment_request_id: id }, { token: 'mal' })).status === 403
+			(await sendClipWebhook(clipEvent(id), { token: 'mal' })).status === 403
 		);
 		ok(
 			'JSON invalido -> 400',
 			(await sendClipWebhook(null, { body: '{no es json' })).status === 400
 		);
+		const gets = async () => (await clipMock.requests()).filter((q) => q.method === 'GET').length;
+		const getsBefore = await gets();
+		for (const bad of [
+			clipEvent('3f2a9c1e-5b7d-4e8a-9c0b-1a2b3c4d5e6f'), // UUID valido que no es nuestro
+			clipEvent('no-es-uuid'),
+			{ hola: 1 },
+			{ payment_request_id: id } // forma que Clip NO usa: se ignora
+		]) {
+			const r0 = await sendClipWebhook(bad);
+			ok('aviso ajeno o mal formado -> 200', r0.status === 200, r0.status);
+		}
+		await new Promise((r) => setTimeout(r, 400));
 		ok(
-			'solicitud desconocida -> 200 sin cambios',
-			JSON.parse(
-				(await sendClipWebhook({ payment_request_id: 'req-999', resource_status: 'COMPLETED' }))
-					.text
-			).status === 'unknown'
-		);
-		ok(
-			'sin payment_request_id -> 200 ignorado',
-			JSON.parse((await sendClipWebhook({ hola: 1 })).text).status === 'ignored'
+			'ids ajenos o inventados no hacen que se llame a Clip',
+			(await gets()) === getsBefore,
+			`${await gets()} vs ${getsBefore}`
 		);
 
 		// ---- un aviso FALSO no paga nada: Clip todavia dice "creado"
-		r = await sendClipWebhook({
-			id: 'evt-fake',
-			payment_request_id: id,
-			resource_status: 'COMPLETED'
-		});
+		r = await sendClipWebhook(clipEvent(id));
+		ok('el webhook responde 200 enseguida', r.status === 200);
+		await waitFor(async () => (await gets()) > getsBefore);
+		await new Promise((r2) => setTimeout(r2, 300));
 		ok(
-			'aviso que dice COMPLETED pero Clip no lo confirma: sigue pendiente',
-			JSON.parse(r.text).status === 'pending' &&
-				(await orderByCode(order.code)).status === 'pending'
+			'aviso con un id real pero Clip no lo confirma: sigue pendiente',
+			(await orderByCode(order.code)).status === 'pending'
 		);
 
 		// ---- pago real
 		await clipMock.complete(id);
-		r = await sendClipWebhook({
-			id: 'evt-1',
-			payment_request_id: id,
-			resource_status: 'COMPLETED',
-			transaction_id: 'tx'
+		r = await sendClipWebhook(clipEvent(id));
+		const paidOrder = await waitFor(async () => {
+			const o = await orderByCode(order.code);
+			return o.status === 'paid' ? o : null;
 		});
-		ok(
-			'webhook verificado con Clip -> pedido pagado',
-			r.status === 200 &&
-				JSON.parse(r.text).changed === true &&
-				(await orderByCode(order.code)).status === 'paid'
-		);
+		ok('webhook verificado con Clip -> pedido pagado', r.status === 200 && !!paidOrder);
 		const paid = await first('payments', `order="${order.id}"`);
 		ok(
-			'pago confirmado con el id del evento y la fecha',
+			'pago confirmado con el id de la solicitud, el recibo de Clip y la fecha',
 			paid.status === 'confirmed' &&
-				paid.provider_event_id === 'evt-1' &&
+				paid.provider_event_id === id &&
+				/^RCPT-\d+$/.test(paid.receipt_no) &&
 				!!paid.confirmed_at &&
 				!!(await orderByCode(order.code)).paid_at
 		);
 
 		// ---- idempotencia
 		const before = await first('orders', `id="${order.id}"`);
-		for (const eventId of ['evt-1', 'evt-1', 'evt-2']) {
-			const again = await sendClipWebhook({
-				id: eventId,
-				payment_request_id: id,
-				resource_status: 'COMPLETED'
-			});
-			ok(
-				`reenvio (${eventId}) responde 200 sin cambiar nada`,
-				again.status === 200 && JSON.parse(again.text).changed === false
-			);
+		for (const type of ['UPDATE', 'UPDATE', 'INSERT']) {
+			const again = await sendClipWebhook(clipEvent(id, type));
+			ok(`reenvio (${type}) responde 200`, again.status === 200);
 		}
+		await new Promise((r2) => setTimeout(r2, 500));
 		ok(
 			'el pedido sigue igual',
 			(await first('orders', `id="${order.id}"`)).updated === before.updated
@@ -469,19 +472,16 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 		const payment = await first('payments', `provider_ref="${id}"`);
 		const order = await su.collection('orders').getOne(payment.order);
 		await clipMock.cancel(id);
-		let r = await sendClipWebhook({
-			id: 'evt-c',
-			payment_request_id: id,
-			resource_status: 'CANCELLED'
-		});
+		await sendClipWebhook(clipEvent(id));
 		ok(
 			'webhook de link cancelado -> pago fallido, pedido pendiente',
-			JSON.parse(r.text).status === 'failed' &&
-				(await first('payments', `id="${payment.id}"`)).status === 'failed' &&
-				(await orderByCode(order.code)).status === 'pending'
+			!!(await waitFor(
+				async () => (await first('payments', `id="${payment.id}"`)).status === 'failed'
+			)) && (await orderByCode(order.code)).status === 'pending'
 		);
 
 		// ---- el cliente cambia a transferencia: recalcula con las tasas del pedido
+		let r;
 		const cust = client();
 		const q = `t=${encodeURIComponent(order.access_token)}`;
 		r = await cust.post(`/pedido/${order.code}?/change&${q}`, { method: 'transfer' });
@@ -532,16 +532,14 @@ describe.skipIf(!enabled)('pedidos: checkout, transferencia, tarjeta (Clip) y ve
 			{}
 		);
 		await clipMock.complete(id2);
-		r = await sendClipWebhook({
-			id: 'evt-late',
-			payment_request_id: id2,
-			resource_status: 'COMPLETED'
-		});
+		await sendClipWebhook(clipEvent(id2));
+		await waitFor(
+			async () => (await su.collection('payments').getOne(late.id)).status === 'confirmed'
+		);
 		const afterLate = await su.collection('orders').getOne(lateOrder.id);
 		ok(
 			'pago tardio: el pedido sigue cancelado pero queda marcado para revisar',
-			JSON.parse(r.text).status === 'paid' &&
-				afterLate.status === 'cancelled' &&
+			afterLate.status === 'cancelled' &&
 				/reembolsar/.test(afterLate.notes) &&
 				(await su.collection('payments').getOne(late.id)).status === 'confirmed'
 		);

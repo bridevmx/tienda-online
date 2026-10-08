@@ -1,5 +1,6 @@
 import {
 	CLIP_API_KEY,
+	CLIP_API_TOKEN,
 	CLIP_API_SECRET,
 	CLIP_API_URL,
 	CLIP_WEBHOOK_TOKEN,
@@ -16,6 +17,7 @@ import { readSettings } from '#modules/settings/service.js';
 
 const clip = createClipClient({
 	baseUrl: CLIP_API_URL,
+	token: CLIP_API_TOKEN,
 	key: CLIP_API_KEY,
 	secret: CLIP_API_SECRET,
 	webhookToken: CLIP_WEBHOOK_TOKEN

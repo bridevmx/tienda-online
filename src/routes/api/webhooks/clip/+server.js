@@ -1,15 +1,20 @@
 import { json } from '@sveltejs/kit';
+import { clientKey, webhookHits } from '#core/limits.js';
 import { processClipNotification, tokenMatches } from '#modules/payments/clip-webhook.js';
 
 /**
- * Webhook de Clip. La URL lleva un token secreto (?token=) porque Clip no documenta una firma; aun
- * asi el aviso no se toma por cierto: el estado se consulta a Clip (ver clip-webhook.js).
- * Responde 200 a lo que no es nuestro/no aplica (para que Clip no reintente) y 502 si no pudimos
- * verificar (para que reintente).
+ * Webhook de Clip: `{ id, origin, event_type }`, sin firma. Es un AVISO, no una prueba: solo se usa el
+ * `id` para preguntarle a Clip el estado real (ver clip-webhook.js). La URL lleva ademas un token
+ * secreto (?token=) como filtro extra.
+ *
+ * Responde 200 enseguida y verifica despues (Clip no documenta que espera ni cuanto aguanta); si la
+ * verificacion falla, el reconciliador (`jobs:reconcile-payments`) lo recupera.
  */
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request, url, locals }) {
+export async function POST({ request, url, locals, getClientAddress }) {
 	if (!locals.clip.isConfigured) return json({ error: 'not found' }, { status: 404 });
+	if (webhookHits.hit(`clip:${clientKey(getClientAddress)}`))
+		return json({ error: 'too many requests' }, { status: 429 });
 	if (!tokenMatches(url.searchParams.get('token'), locals.clip.webhookToken)) {
 		return json({ error: 'forbidden' }, { status: 403 });
 	}
@@ -21,16 +26,13 @@ export async function POST({ request, url, locals }) {
 		return json({ error: 'invalid json' }, { status: 400 });
 	}
 
-	try {
-		const result = await processClipNotification({
-			payload,
-			pb: await locals.adminPb(),
-			clip: locals.clip,
-			sales: await locals.sales()
-		});
-		return json({ ok: true, ...result });
-	} catch (err) {
-		console.error('[clip webhook] no se pudo procesar:', err?.message ?? err);
-		return json({ error: 'could not verify payment' }, { status: 502 });
-	}
+	const pb = await locals.adminPb();
+	const sales = await locals.sales();
+	processClipNotification({ payload, pb, clip: locals.clip, sales }).catch((err) =>
+		console.error(
+			'[clip webhook] no se pudo verificar (lo recupera el reconciliador):',
+			err?.message ?? err
+		)
+	);
+	return json({ ok: true });
 }

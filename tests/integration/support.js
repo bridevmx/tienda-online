@@ -184,8 +184,12 @@ export async function saveSettings(boss, patch = {}) {
 const clipCall = (path) =>
 	fetch(`${cfg.clipUrl}/__mock/${path}`, { method: 'POST' }).then((r) => r.json());
 export const clipMock = {
-	complete: (id) => clipCall(`complete/${id}`),
+	/** `receipt`: numero de recibo propio, o 'none' para completar sin recibo todavia. */
+	complete: (id, receipt) => clipCall(`complete/${id}${receipt ? `?receipt=${receipt}` : ''}`),
 	cancel: (id) => clipCall(`cancel/${id}`),
+	expire: (id) => clipCall(`expire/${id}`),
+	/** Altera lo que Clip reportara: { amount, currency, reference }. */
+	tamper: (id, fields) => clipCall(`tamper/${id}?${new URLSearchParams(fields)}`),
 	failNext: () => clipCall('fail-next'),
 	reset: () => clipCall('reset'),
 	requests: () => fetch(`${cfg.clipUrl}/__mock/requests`).then((r) => r.json())
@@ -195,9 +199,31 @@ export const clipMock = {
 export function sendClipWebhook(payload, { token = cfg?.clipWebhookToken, body } = {}) {
 	return raw(`/api/webhooks/clip${token === null ? '' : `?token=${encodeURIComponent(token)}`}`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', 'x-forwarded-proto': 'http' },
+		headers: {
+			'content-type': 'application/json',
+			'x-forwarded-proto': 'http',
+			'x-forwarded-for': `10.9.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`
+		},
 		body: body ?? JSON.stringify(payload)
 	});
+}
+
+/** Aviso con la forma oficial del webhook de Clip: solo `id`, `origin` y `event_type`. */
+export const clipEvent = (id, type = 'UPDATE') => ({
+	id,
+	origin: 'checkout-api',
+	event_type: type
+});
+
+/** Espera (poll) a que `check()` devuelva algo verdadero; el webhook verifica DESPUES de responder 200. */
+export async function waitFor(check, { ms = 8000, every = 100 } = {}) {
+	const end = Date.now() + ms;
+	for (;;) {
+		const value = await check();
+		if (value) return value;
+		if (Date.now() > end) return value;
+		await new Promise((r) => setTimeout(r, every));
+	}
 }
 
 // ---------------------------------------------------------------- pedidos

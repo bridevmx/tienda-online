@@ -149,6 +149,18 @@
 									>{p.method} <span class="opacity-60">· {p.statusLabel}</span>{#if p.ref}
 										<span class="font-mono text-xs opacity-60">({p.ref})</span>{/if}</span
 								>
+								{#if p.receipt}<span class="w-full text-xs opacity-60"
+										>Recibo de Clip: <span class="font-mono">{p.receipt}</span></span
+									>{/if}
+								{#if p.note}
+									<div
+										role="alert"
+										class="alert alert-error w-full text-sm"
+										data-testid="payment-note"
+									>
+										{p.note}
+									</div>
+								{/if}
 								<span class="flex items-center gap-3">
 									{#if p.confirmedAt}<span class="opacity-60"
 											>{formatDate(p.confirmedAt, { time: true })}</span

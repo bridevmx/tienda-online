@@ -13,7 +13,8 @@ import {
 	parseOrderLocation,
 	saveSettings,
 	staff,
-	stockOf
+	stockOf,
+	waitFor
 } from './support.js';
 
 const NBSP = new RegExp(String.fromCharCode(160), 'g');
@@ -172,10 +173,17 @@ describe.skipIf(!enabled)('TPV', () => {
 
 		const pay = await first('payments', `order="${order.id}"`);
 		await clipMock.complete(pay.provider_ref);
-		t = await caja.get(r.location);
+		// la pantalla consulta cada pocos segundos (con un minimo de 2 s entre consultas a Clip)
+		t = await waitFor(
+			async () => {
+				const page = await caja.get(r.location);
+				return page.text.includes('Pagado') ? page : null;
+			},
+			{ ms: 6000, every: 500 }
+		);
 		ok(
 			'al consultar, Clip confirma y el ticket queda pagado',
-			!t.text.includes('Esperando el pago') && t.text.includes('Pagado')
+			!!t && !t.text.includes('Esperando el pago') && t.text.includes('Pagado')
 		);
 		order = await orderByCode(code);
 		ok('pedido pagado', order.status === 'paid');

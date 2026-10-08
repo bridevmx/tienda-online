@@ -64,6 +64,8 @@ export async function load({ locals, url, params }) {
 			statusLabel: PAYMENT_STATUS[p.status] ?? p.status,
 			amount: p.amount,
 			ref: p.provider_ref || null,
+			receipt: p.receipt_no || null,
+			note: p.provider_note || null,
 			confirmedAt: p.confirmed_at || null,
 			hasProof: !!p.proof
 		})),

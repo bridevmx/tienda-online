@@ -20,6 +20,11 @@ export const variables = defineEnvVars({
 		schema: optional('https://api.payclip.com'),
 		description: 'Base de la API de Clip (para pruebas se apunta a un doble)'
 	},
+	CLIP_API_TOKEN: {
+		schema: optional(''),
+		description:
+			'Clip: valor del header Authorization (alternativa a CLIP_API_KEY y CLIP_API_SECRET)'
+	},
 	CLIP_API_KEY: { schema: optional(''), description: 'Credencial de Clip (usuario)' },
 	CLIP_API_SECRET: { schema: optional(''), description: 'Credencial de Clip (secreto)' },
 	CLIP_WEBHOOK_TOKEN: {

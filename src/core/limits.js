@@ -5,6 +5,9 @@ export const loginFailures = createRateLimiter({ max: 8, windowMs: 10 * 60_000 }
 /** Acciones que envian correo o crean cuentas (registro, recuperar, reenviar verificacion). */
 export const mailActions = createRateLimiter({ max: 5, windowMs: 15 * 60_000 });
 
+/** Webhook publico de Clip (por IP): evita que se use para gastar llamadas a Clip. */
+export const webhookHits = createRateLimiter({ max: 120, windowMs: 60_000 });
+
 export const TOO_MANY = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
 
 /**

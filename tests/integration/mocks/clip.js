@@ -1,10 +1,15 @@
+import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 
 /**
  * Doble de la API de Clip: crea links de pago (POST /v2/checkout) y consulta su estado
- * (GET /v2/checkout/:id), con autenticacion Basic como la real. Los tests lo controlan por HTTP
- * (corre en otro proceso que los tests): /__mock/complete/:id, /__mock/cancel/:id, /__mock/fail-next,
- * /__mock/requests y /__mock/reset.
+ * (GET /v2/checkout/:id), con autenticacion Basic como la real y el formato de la documentacion
+ * oficial: ids UUID, metadata.external_reference, estados CHECKOUT_*, y `receipt_no` SOLO al completarse.
+ * Los tests lo controlan por HTTP (corre en otro proceso que los tests):
+ *   /__mock/complete/:id[?receipt=<no>|none]   completa (con recibo propio o sin recibo aun)
+ *   /__mock/cancel/:id, /__mock/expire/:id     cancela / vence
+ *   /__mock/tamper/:id?amount=&currency=&reference=   altera lo que Clip reportara (anomalias)
+ *   /__mock/fail-next, /__mock/requests, /__mock/reset
  */
 export const CLIP_KEY = 'test-key';
 export const CLIP_SECRET = 'test-secret';
@@ -14,7 +19,7 @@ export async function startClipMock() {
 	const checkouts = new Map();
 	const requests = [];
 	let failNext = false;
-	let sequence = 0;
+	let receipts = 0;
 	let baseUrl = '';
 
 	const send = (res, status, body) => {
@@ -40,10 +45,21 @@ export async function startClipMock() {
 		// ---- control para los tests
 		if (url.pathname.startsWith('/__mock/')) {
 			const [, , action, id] = url.pathname.split('/');
-			if (action === 'complete' || action === 'cancel') {
+			if (['complete', 'cancel', 'expire', 'tamper'].includes(action)) {
 				const c = checkouts.get(id);
 				if (!c) return send(res, 404, { error: 'unknown' });
-				c.status = action === 'complete' ? 'CHECKOUT_COMPLETED' : 'CHECKOUT_CANCELLED';
+				if (action === 'complete') {
+					c.status = 'CHECKOUT_COMPLETED';
+					const receipt = url.searchParams.get('receipt');
+					c.receipt_no = receipt === 'none' ? null : (receipt ?? `RCPT-${++receipts}`);
+				}
+				if (action === 'cancel') c.status = 'CHECKOUT_CANCELLED';
+				if (action === 'expire') c.status = 'CHECKOUT_EXPIRED';
+				if (action === 'tamper') {
+					if (url.searchParams.has('amount')) c.amount = Number(url.searchParams.get('amount'));
+					if (url.searchParams.has('currency')) c.currency = url.searchParams.get('currency');
+					if (url.searchParams.has('reference')) c.reference = url.searchParams.get('reference');
+				}
 				return send(res, 200, c);
 			}
 			if (action === 'fail-next') {
@@ -75,20 +91,32 @@ export async function startClipMock() {
 				return send(res, 500, { error: 'boom' });
 			}
 			const body = await readJson(req);
+			// como la API real: estos campos son obligatorios
+			const reference = body?.metadata?.external_reference;
 			const valid =
 				body &&
 				typeof body.amount === 'number' &&
-				body.amount > 0 &&
+				body.amount >= 1 &&
+				Math.abs(body.amount * 100 - Math.round(body.amount * 100)) < 1e-6 &&
 				body.currency === 'MXN' &&
 				typeof body.purchase_description === 'string' &&
+				body.purchase_description.length <= 250 &&
 				body.redirection_url?.success &&
+				body.redirection_url?.error &&
+				body.redirection_url?.default &&
+				typeof reference === 'string' &&
+				reference.length > 0 &&
+				reference.length <= 36 &&
 				body.webhook_url;
-			if (!valid) return send(res, 400, { error: 'invalid body', body });
-			const id = `req-${++sequence}`;
+			if (!valid) return send(res, 400, { error: 'invalid body', code_message: 'invalid body' });
+			const id = randomUUID();
 			const checkout = {
 				payment_request_id: id,
 				status: 'CHECKOUT_CREATED',
 				amount: body.amount,
+				currency: body.currency,
+				reference,
+				receipt_no: null,
 				request: body
 			};
 			checkouts.set(id, checkout);
@@ -97,9 +125,7 @@ export async function startClipMock() {
 				payment_request_id: id,
 				payment_request_url: `${baseUrl}/pay/${id}`,
 				status: 'CHECKOUT_CREATED',
-				expires_at: new Date(Date.now() + 86_400_000).toISOString(),
-				qr_image_url: `${baseUrl}/qr/${id}.png`,
-				api_version: '2'
+				qr_image_url: `${baseUrl}/qr/${id}.png`
 			});
 		}
 		const match = url.pathname.match(/^\/v2\/checkout\/([^/]+)$/);
@@ -109,7 +135,13 @@ export async function startClipMock() {
 				? send(res, 200, {
 						payment_request_id: c.payment_request_id,
 						status: c.status,
-						amount: c.amount
+						amount: c.amount,
+						currency: c.currency,
+						metadata: { external_reference: c.reference },
+						// como la doc: el recibo solo existe cuando esta completado
+						...(c.status === 'CHECKOUT_COMPLETED' && c.receipt_no
+							? { receipt_no: c.receipt_no }
+							: {})
 					})
 				: send(res, 404, { error: 'not found' });
 		}

@@ -325,8 +325,8 @@ de aviso usan `info` y `error` (el tema no tiene "success").
 ## 17. Pendiente de validar
 
 - Tratamiento fiscal de la comision integrada en el precio y del descuento en la factura (contador).
-- Mecanismo de verificacion de webhooks de Clip (documentacion vigente) y estados reales de su API: el
-  cliente se escribio a partir de documentacion publica y se prueba contra un doble; validar en sandbox.
+- Clip: la integracion sigue la API oficial (ver `docs/CLIP.md`) y se prueba contra un doble; falta
+  validarla en una cuenta real/sandbox (lista de comprobaciones en `docs/CLIP.md` §7 y `docs/ROADMAP.md` §1).
 - El limitador de intentos es en memoria (una instancia de Node); con varias instancias usar el de
   PocketBase o un almacen compartido.
 - Efectivo recibido en el TPV: solo se usa para el cambio del ticket; si se quiere cuadre de caja

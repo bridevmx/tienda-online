@@ -235,19 +235,25 @@ export function createSalesService({ pb, getSettings, clip, now = () => new Date
 		return { order, action: { type: 'paid' } };
 	}
 
-	/** Crea el link de Clip del pedido y lo guarda en su pago pendiente. */
+	/** Crea el link de Clip del pedido y lo guarda en su pago pendiente (con la referencia firmada). */
 	async function startClipPayment({ orderId, code, accessToken, total, origin }) {
+		const payment = await pb
+			.collection('payments')
+			.getFirstListItem(pb.filter('order = {:id} && status = "pending"', { id: orderId }));
+		const reference = clip.makeReference(payment.id);
+		// guardar la referencia ANTES de llamar a Clip: si algo falla despues, el pago ya la tiene
+		await pb.collection('payments').update(payment.id, { reference });
+
 		const back = `${origin}${routes.order(code, accessToken)}`;
 		const link = await clip.createCheckout({
 			amountCents: total,
 			description: `Pedido ${code}`,
+			reference,
 			successUrl: back,
 			errorUrl: `${back}${back.includes('?') ? '&' : '?'}pago=error`,
+			defaultUrl: `${origin}${routes.home()}`,
 			webhookUrl: `${origin}${routes.webhooks.clip()}?token=${encodeURIComponent(clip.webhookToken)}`
 		});
-		const payment = await pb
-			.collection('payments')
-			.getFirstListItem(pb.filter('order = {:id} && status = "pending"', { id: orderId }));
 		await pb
 			.collection('payments')
 			.update(payment.id, { provider_ref: link.id, provider_url: link.url });
@@ -283,7 +289,10 @@ export function createSalesService({ pb, getSettings, clip, now = () => new Date
 	 * para no procesar dos veces el mismo evento. Si el pago llega cuando el pedido ya se cancelo
 	 * (vencio), el pedido no se reabre: se deja constancia para que el personal lo revise y reembolse.
 	 */
-	async function confirmPayment(by, { by: userId = null, eventId = '', paymentId = '' } = {}) {
+	async function confirmPayment(
+		by,
+		{ by: userId = null, eventId = '', paymentId = '', receiptNo = '' } = {}
+	) {
 		const { order, payments, payment: current } = await requireBundle(by);
 		const target = paymentId ? payments.find((p) => p.id === paymentId) : current;
 		if (!target) throw new DomainError('El pedido no tiene un pago que confirmar');
@@ -297,7 +306,8 @@ export function createSalesService({ pb, getSettings, clip, now = () => new Date
 			status: 'confirmed',
 			confirmed_at: when,
 			...(userId ? { confirmed_by: userId } : {}),
-			...(eventId ? { provider_event_id: eventId } : {})
+			...(eventId ? { provider_event_id: eventId } : {}),
+			...(receiptNo ? { receipt_no: receiptNo } : {})
 		};
 		if (order.status === 'cancelled') {
 			batch.collection('payments').update(target.id, confirmed);
@@ -448,6 +458,13 @@ export function createSalesService({ pb, getSettings, clip, now = () => new Date
 		};
 	}
 
+	/** Deja una nota en un pago (anomalias que el personal debe revisar). No cambia estados. */
+	async function notePayment(paymentId, note) {
+		await pb
+			.collection('payments')
+			.update(paymentId, { provider_note: String(note).slice(0, 255) });
+	}
+
 	/** Marca como fallido UN intento de pago pendiente (p. ej. Clip cancelo o vencio ese link). */
 	async function failPayment(paymentId) {
 		const payment = await pb.collection('payments').getOne(paymentId);
@@ -487,6 +504,7 @@ export function createSalesService({ pb, getSettings, clip, now = () => new Date
 		refundOrder,
 		changePaymentMethod,
 		failPayment,
+		notePayment,
 		expirePending,
 		bundle: (by) => loadBundle(pb, by)
 	};

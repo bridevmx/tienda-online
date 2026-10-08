@@ -27,7 +27,8 @@
 		"check:schema": "node --env-file-if-exists=.env scripts/check-schema.js",
 		"test:integration": "vitest run --config vitest.integration.config.js",
 		"jobs:expire-orders": "node --env-file-if-exists=.env scripts/jobs/expire-orders.js",
-		"test:e2e": "vitest run --config vitest.e2e.config.js"
+		"test:e2e": "vitest run --config vitest.e2e.config.js",
+		"jobs:reconcile-payments": "node --env-file-if-exists=.env scripts/jobs/reconcile-payments.js"
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",
