@@ -44,7 +44,9 @@ export const routes = {
 	// punto de venta
 	pos: {
 		home: () => '/tpv',
-		sales: () => '/tpv/ventas'
+		sales: () => '/tpv/ventas',
+		sale: (code, received) =>
+			`/tpv/ventas/${enc(code)}${received ? `?recibido=${Number(received) || 0}` : ''}`
 	},
 
 	/** Archivo de un registro de PocketBase servido por la app (el navegador nunca ve PocketBase). */

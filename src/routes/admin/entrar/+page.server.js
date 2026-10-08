@@ -6,12 +6,18 @@ import { routes } from '#core/routes.js';
 import { parseForm } from '#core/validate.js';
 import { loginSchema } from '#modules/access/schema.js';
 
+/** A donde volver tras entrar: una ruta del admin o del TPV (nada fuera de ellas). */
+const destination = (url) => {
+	const raw = url.searchParams.get('next');
+	return safeNext(raw, {
+		prefix: '/tpv',
+		fallback: safeNext(raw, { prefix: '/admin', fallback: routes.admin.home() })
+	});
+};
+
 /** @type {import('./$types').PageServerLoad} */
 export function load({ locals, url }) {
-	const next = safeNext(url.searchParams.get('next'), {
-		prefix: '/admin',
-		fallback: routes.admin.home()
-	});
+	const next = destination(url);
 	if (locals.user) redirect(303, next);
 	return { next };
 }
@@ -43,9 +49,6 @@ export const actions = {
 
 		keys.forEach((k) => loginFailures.reset(k));
 		cookies.set(SESSION.staff.cookie, token, sessionCookieOptions(token));
-		redirect(
-			303,
-			safeNext(url.searchParams.get('next'), { prefix: '/admin', fallback: routes.admin.home() })
-		);
+		redirect(303, destination(url));
 	}
 };

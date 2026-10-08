@@ -30,6 +30,7 @@
 	},
 	"dependencies": {
 		"pocketbase": "^0.28.1",
+		"qrcode": "^1.5.4",
 		"sanitize-html": "^2.18.0",
 		"zod": "^4.6.5"
 	},

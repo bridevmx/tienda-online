@@ -191,7 +191,14 @@ resumen `sales_daily`. Apertura/cierre de caja queda como feature futura (`order
       Los pedidos de invitado se vinculan solo con el correo YA verificado. Limite de intentos
       (`core/rate-limit.js`, en memoria) en accesos, registro y envios de correo. 35 pruebas de
       integracion (sumidero SMTP legible por HTTP). Detras de un proxy configura `ADDRESS_HEADER`.
-- [ ] **8. TPV.**
+- [x] **8. TPV** — `/tpv` a pantalla completa (permiso `pos:use`): buscador con foco automatico, lector
+      de SKU / codigo de barras con Enter, atajo `/`, cuadricula por categoria, ticket con precio de
+      tarjeta y de efectivo/transferencia, cobro en dialogo (efectivo con cambio y montos rapidos,
+      transferencia confirmada al momento, tarjeta con QR del link de Clip y consulta de estado cada
+      3 s). `/tpv/ventas` (turno del cajero con total por metodo) y `/tpv/ventas/[code]` (ticket
+      imprimible, solo del propio cajero o de quien tiene `orders:read`). Reutiliza `placeOrder`
+      (`channel: 'pos'`, `confirmNow`, `createdBy`). El efectivo recibido solo se usa para el cambio
+      del ticket (no se guarda). Mobbin: tickets tipo punto de venta y tarjetas apiladas.
 - [ ] **9. Calidad** — tests de `computeTotals` (ejemplos de la seccion 5), `can`, schemas,
       `placeOrder`, que no se filtre la comision; Playwright de humo.
 
